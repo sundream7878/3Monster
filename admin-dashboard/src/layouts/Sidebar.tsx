@@ -1,16 +1,22 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Key, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Key, Users, LogOut, HelpCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 
-const navItems = [
-    { icon: LayoutDashboard, label: '대시보드', href: '/' },
-    { icon: Key, label: '발행 도구', href: '/generator' },
-    { icon: Users, label: '전체 관리', href: '/licenses' },
-];
-
 export const Sidebar = () => {
-    const { logout } = useAuth();
+    const { logout, role } = useAuth();
+
+    const adminNavItems = [
+        { icon: LayoutDashboard, label: '대시보드', href: '/' },
+        { icon: Key, label: '발행 도구', href: '/generator' },
+        { icon: Users, label: '전체 관리', href: '/licenses' },
+    ];
+
+    const buyerNavItems = [
+        { icon: HelpCircle, label: '고객센터', href: '/support' },
+    ];
+
+    const navItems = role === 'admin' ? adminNavItems : buyerNavItems;
     return (
         <aside className="fixed inset-y-0 left-0 z-40 w-72 transform bg-white transition-transform duration-300 lg:translate-x-0 border-r border-slate-100">
             {/* Logo Area */}

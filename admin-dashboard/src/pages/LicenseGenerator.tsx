@@ -128,9 +128,17 @@ export const LicenseGenerator = () => {
                                 <Input
                                     required
                                     placeholder="구매자 성함 또는 업체명을 입력하세요"
-                                    className="h-14 bg-slate-100/50"
+                                    className="h-14 bg-slate-100/50 mb-4"
                                     value={formData.buyer_name}
                                     onChange={e => setFormData({ ...formData, buyer_name: e.target.value })}
+                                />
+                                <Input
+                                    required
+                                    type="email"
+                                    placeholder="구매자 이메일 (로그인 시 사용)"
+                                    className="h-14 bg-slate-100/50 mb-4"
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 />
                             </div>
 

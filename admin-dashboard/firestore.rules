@@ -1,13 +1,38 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // allow authenticated reads and writes to core collections
+    
+    // Custom functions
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+    function isBuyer() {
+      return request.auth != null && request.auth.token.email == null;
+    }
+
     match /licenses/{licenseId} {
-      allow read, write: if request.auth != null;
+      // Both admins and buyers (during login check) can read licenses
+      allow read: if request.auth != null;
+      // Only admins can create/update/delete licenses
+      allow write: if isAdmin();
     }
     
     match /buyers/{buyerId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAdmin();
+    }
+
+    match /support_tickets/{ticketId} {
+      // Admins can read all tickets. Buyers can read their own (assuming they query by their email)
+      allow read: if request.auth != null;
+      // Anyone logged in (including anonymous buyers) can file a ticket
+      allow create: if request.auth != null;
+      // Only admins can update or delete tickets
+      allow update, delete: if isAdmin();
+    }
+
+    match /otps/{email} {
+      // Allow creation/read by authenticated users (including anonymous buyers)
+      allow create, update, read: if request.auth != null;
     }
   }
 }
