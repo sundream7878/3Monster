@@ -86,16 +86,25 @@ export const Login = () => {
             });
 
             if (!res.ok) {
-                const errorData = await res.json();
-                console.error('Resend API Error details:', errorData);
+                const contentType = res.headers.get('content-type');
+                let errorMessage = '이메일 발송에 실패했습니다.';
                 
-                // If sandbox error, give a more helpful message
-                if (res.status === 403) {
-                    setError('Resend 샌드박스 모드 제한: 등록된 이메일 또는 도메인만 발송 가능합니다. 개발자 도구(F12) 콘솔에서 인증번호를 확인해주세요!');
-                    setOtpStep(2); // Still allow going to next step to use console code
-                    return;
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await res.json();
+                    console.error('Resend API Error details:', errorData);
+                    errorMessage = errorData.message || errorMessage;
+                    
+                    // If sandbox error, give a more helpful message
+                    if (res.status === 403) {
+                        setError('Resend 샌드박스 모드 제한: 등록된 이메일 또는 도메인만 발송 가능합니다. 개발자 도구(F12) 콘솔에서 인증번호를 확인해주세요!');
+                        setOtpStep(2);
+                        return;
+                    }
+                } else {
+                    const text = await res.text();
+                    console.error('Resend API non-JSON error:', text);
                 }
-                throw new Error(errorData.message || '이메일 발송에 실패했습니다.');
+                throw new Error(errorMessage);
             }
 
             alert(`인증번호가 메일로 전송되었습니다.`);

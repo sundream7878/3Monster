@@ -1,1 +1,2 @@
-/*    /index.html   200
+/api/resend/*  https://api.resend.com/:splat  200!
+/*              /index.html                     200
