@@ -24,7 +24,7 @@ export const Sidebar = () => {
             <div className="flex h-24 items-center px-8">
                 <div className="flex items-center gap-3">
                     <img src="/logo.png" alt="Logo" className="h-10 w-auto object-contain" />
-                    <span className="text-xl font-black tracking-tight text-slate-800">CafeMonster</span>
+                    <span className="text-xl font-black tracking-tight text-slate-800">3Monster</span>
                 </div>
             </div>
 

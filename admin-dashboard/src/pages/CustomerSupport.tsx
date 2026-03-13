@@ -149,7 +149,7 @@ export const CustomerSupport = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight">고객센터</h1>
-                    <p className="text-slate-400 font-bold">CafeMonster 서비스 이용 문의 및 버그 제보 게시판입니다.</p>
+                    <p className="text-slate-400 font-bold">3Monster 서비스 이용 문의 및 버그 제보 게시판입니다.</p>
                 </div>
                 {!isAdmin && (
                     <Button 

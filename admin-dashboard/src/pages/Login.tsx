@@ -56,18 +56,18 @@ export const Login = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    from: 'CafeMonster <onboarding@resend.dev>',
+                    from: '3Monster <onboarding@resend.dev>',
                     to: [emailKey],
-                    subject: '[CafeMonster] 로그인 인증번호',
+                    subject: '[3Monster] 로그인 인증번호',
                     html: `
                         <div style="font-family: sans-serif; padding: 40px; color: #334155; line-height: 1.6;">
                             <div style="max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                                 <div style="background: #0f172a; padding: 40px; text-align: center;">
-                                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -0.025em;">CafeMonster</h1>
+                                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -0.025em;">3Monster</h1>
                                 </div>
                                 <div style="padding: 40px;">
                                     <h2 style="color: #0f172a; margin-top: 0; font-weight: 800; font-size: 20px;">인증번호 안내</h2>
-                                    <p>안녕하세요, CafeMonster 서비스를 이용해 주셔서 감사합니다.</p>
+                                    <p>안녕하세요, 3Monster 서비스를 이용해 주셔서 감사합니다.</p>
                                     <p>서비스 접속을 위한 6자리 인증번호를 안내해 드립니다.</p>
                                     
                                     <div style="background: #f8fafc; border-radius: 16px; padding: 32px; margin: 32px 0; text-align: center;">
@@ -156,9 +156,9 @@ export const Login = () => {
                 <Card className="p-12 shadow-premium border-none bg-white rounded-[2.5rem]">
                     <div className="flex flex-col items-center text-center mb-10">
                         <div className="h-20 w-auto flex items-center justify-center mb-6">
-                            <img src="/logo.png" alt="CafeMonster Logo" className="h-full object-contain" />
+                            <img src="/logo.png" alt="3Monster Logo" className="h-full object-contain" />
                         </div>
-                        <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">CafeMonster</h1>
+                        <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">3Monster</h1>
                         <p className="text-slate-400 font-bold">서비스 이용을 위해 로그인해주세요.</p>
                     </div>
 
@@ -238,7 +238,7 @@ export const Login = () => {
                     </form>
                 </Card>
                 <p className="text-center mt-10 text-[10px] text-slate-300 font-black tracking-widest uppercase">
-                    © 2024 CafeMonster Series. Secured by Cloud Shield.
+                    © 2024 3Monster Series. Secured by Cloud Shield.
                 </p>
             </motion.div>
         </div>
