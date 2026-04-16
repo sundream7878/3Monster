@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { signInAnonymously } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -20,7 +18,7 @@ export const Login = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    // Bootstrap admins on load (Temporary - only runs until Firestore is populated)
+    // Bootstrap admins on load (Temporary - only runs until metadata is populated)
     React.useEffect(() => {
         bootstrapAdmins();
     }, []);
@@ -30,20 +28,27 @@ export const Login = () => {
         setLoading(true);
         setError('');
         try {
-            if (!auth.currentUser) {
-                await signInAnonymously(auth);
+            // 익명 로그인이 필요한 경우 (Supabase 정책상 인증된 세션에서만 쓰기 허용시)
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                await supabase.auth.signInAnonymously();
             }
 
             const emailKey = email.toLowerCase();
             const code = Math.floor(100000 + Math.random() * 900000).toString();
+            const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
             
-            await setDoc(doc(db, 'otps', emailKey), {
-                code,
-                createdAt: serverTimestamp(),
-                expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-            });
+            const { error: upsertError } = await supabase
+                .from('otps')
+                .upsert({ 
+                    email: emailKey, 
+                    code, 
+                    expires_at: expiresAt 
+                }, { onConflict: 'email' });
 
-            // FOR DEVELOPMENT: Log OTP to console so you can test even if email fails
+            if (upsertError) throw upsertError;
+
+            // FOR DEVELOPMENT: Log OTP to console
             console.log('-----------------------------------------');
             console.log('🔓 [DEV ONLY] OTP CODE:', code);
             console.log('📧 Target Email:', emailKey);
@@ -94,7 +99,6 @@ export const Login = () => {
                     console.error('Resend API Error details:', errorData);
                     errorMessage = errorData.message || errorMessage;
                     
-                    // If sandbox error, give a more helpful message
                     if (res.status === 403) {
                         setError('Resend 샌드박스 모드 제한: 등록된 이메일 또는 도메인만 발송 가능합니다. 개발자 도구(F12) 콘솔에서 인증번호를 확인해주세요!');
                         setOtpStep(2);
@@ -122,30 +126,34 @@ export const Login = () => {
         setLoading(true);
         setError('');
         try {
-            const otpDoc = await getDoc(doc(db, 'otps', email.toLowerCase()));
-            if (!otpDoc.exists() || otpDoc.data().code !== otp) {
+            const { data: otpData, error: otpError } = await supabase
+                .from('otps')
+                .select('*')
+                .eq('email', email.toLowerCase())
+                .single();
+
+            if (otpError || !otpData || otpData.code !== otp) {
                 setError('인증번호가 올바르지 않거나 만료되었습니다.');
                 return;
             }
 
-            const expiresAt = otpDoc.data().expiresAt.toDate();
+            const expiresAt = new Date(otpData.expires_at);
             if (new Date() > expiresAt) {
                 setError('인증번호가 만료되었습니다. 다시 시도해주세요.');
                 setOtpStep(1);
                 return;
             }
 
-            if (!auth.currentUser) {
-                await signInAnonymously(auth);
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                await supabase.auth.signInAnonymously();
             }
             
             const emailKey = email.toLowerCase();
             localStorage.setItem('user_email', emailKey);
             localStorage.setItem('buyer_email', emailKey); 
             
-            // Critical: Refresh role in context before navigating
             await refreshRole();
-            
             navigate('/');
         } catch (err: any) {
             setError('로그인 처리 중 오류가 발생했습니다.');

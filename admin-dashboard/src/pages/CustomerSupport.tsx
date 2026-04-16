@@ -3,9 +3,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { 
     UploadCloud, 
     CheckCircle2, 
@@ -44,25 +42,54 @@ export const CustomerSupport = () => {
     const [adminReply, setAdminReply] = useState('');
     const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
 
+    const fetchTickets = async () => {
+        if (!user) return;
+        const { data, error } = await supabase
+            .from('support_tickets')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error('Error fetching tickets:', error);
+        } else {
+            setTickets(data || []);
+        }
+    };
+
     // Fetch tickets
     React.useEffect(() => {
-        if (!user) return;
-        const q = query(collection(db, 'support_tickets'), orderBy('createdAt', 'desc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const ticketData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setTickets(ticketData);
-        });
-        return () => unsubscribe();
+        fetchTickets();
+
+        const channel = supabase
+            .channel('support-sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets' }, () => {
+                fetchTickets();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [user]);
 
     const handleUploadFile = async (file: File, folder: string): Promise<string> => {
         if (!user) throw new Error('Not authenticated');
-        const fileRef = ref(storage, `support/${user.uid}/${folder}/${Date.now()}_${file.name}`);
-        const snapshot = await uploadBytesResumable(fileRef, file);
-        return getDownloadURL(snapshot.ref);
+        
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${user.id}/${folder}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('support')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('support')
+            .getPublicUrl(filePath);
+
+        return publicUrl;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -80,16 +107,19 @@ export const CustomerSupport = () => {
             if (imageFile) imageUrl = await handleUploadFile(imageFile, 'images');
             if (logFile) logUrl = await handleUploadFile(logFile, 'logs');
 
-            await addDoc(collection(db, 'support_tickets'), {
-                uid: user.uid,
-                email: contactEmail.toLowerCase(),
-                issueType,
-                description,
-                imageUrl,
-                logUrl,
-                status: 'open',
-                createdAt: serverTimestamp(),
-            });
+            const { error: insertError } = await supabase
+                .from('support_tickets')
+                .insert([{
+                    uid: user.id,
+                    email: contactEmail.toLowerCase(),
+                    issue_type: issueType,
+                    description,
+                    image_url: imageUrl,
+                    log_url: logUrl,
+                    status: 'open'
+                }]);
+
+            if (insertError) throw insertError;
 
             setSuccess(true);
             setTimeout(() => {
@@ -112,13 +142,17 @@ export const CustomerSupport = () => {
         
         setUpdatingTicketId(ticketId);
         try {
-            const { doc, updateDoc } = await import('firebase/firestore');
-            const ticketRef = doc(db, 'support_tickets', ticketId);
-            await updateDoc(ticketRef, {
-                reply: adminReply,
-                status: 'closed',
-                repliedAt: serverTimestamp(),
-            });
+            const { error } = await supabase
+                .from('support_tickets')
+                .update({
+                    reply: adminReply,
+                    status: 'closed',
+                    replied_at: new Date().toISOString()
+                })
+                .eq('id', ticketId);
+
+            if (error) throw error;
+            
             setAdminReply('');
             setExpandedTicketId(null);
         } catch (err) {
@@ -214,13 +248,13 @@ export const CustomerSupport = () => {
                                                 <div className="flex items-center gap-3">
                                                     <span className={cn(
                                                         "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider",
-                                                        ticket.issueType === 'bug' ? "bg-rose-50 text-rose-500" :
-                                                        ticket.issueType === 'feature' ? "bg-indigo-50 text-indigo-500" :
-                                                        ticket.issueType === 'license' ? "bg-amber-50 text-amber-500" : "bg-slate-100 text-slate-500"
+                                                        ticket.issue_type === 'bug' ? "bg-rose-50 text-rose-500" :
+                                                        ticket.issue_type === 'feature' ? "bg-indigo-50 text-indigo-500" :
+                                                        ticket.issue_type === 'license' ? "bg-amber-50 text-amber-500" : "bg-slate-100 text-slate-500"
                                                     )}>
-                                                        {ticket.issueType === 'bug' ? '버그/오류' : 
-                                                         ticket.issueType === 'feature' ? '기능제안' :
-                                                         ticket.issueType === 'license' ? '라이선스' : '기타'}
+                                                        {ticket.issue_type === 'bug' ? '버그/오류' : 
+                                                         ticket.issue_type === 'feature' ? '기능제안' :
+                                                         ticket.issue_type === 'license' ? '라이선스' : '기타'}
                                                     </span>
                                                     <span className="text-slate-400 font-bold text-xs">
                                                         {canViewDetail ? ticket.email : maskEmail(ticket.email)}
@@ -244,7 +278,7 @@ export const CustomerSupport = () => {
                                                     {ticket.status === 'open' ? '처리 대기중' : '진행 완료'}
                                                 </span>
                                                 <span className="text-[10px] font-bold text-slate-300 mt-1 uppercase">
-                                                    {ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                                                    {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
                                                 </span>
                                             </div>
                                             {canViewDetail && (
@@ -267,16 +301,16 @@ export const CustomerSupport = () => {
                                                         {ticket.description}
                                                     </p>
                                                     
-                                                    {(ticket.imageUrl || ticket.logUrl) && (
+                                                    {(ticket.image_url || ticket.log_url) && (
                                                         <div className="mt-8 pt-8 border-t border-slate-50 flex flex-wrap gap-4">
-                                                            {ticket.imageUrl && (
-                                                                <a href={ticket.imageUrl} target="_blank" rel="noopener noreferrer" 
+                                                            {ticket.image_url && (
+                                                                <a href={ticket.image_url} target="_blank" rel="noopener noreferrer" 
                                                                 className="flex items-center gap-3 px-6 py-4 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded-2xl text-sm font-black transition-all group/link">
                                                                     <ImageIcon className="w-5 h-5" /> 스크린샷 보기 <ExternalLink className="w-4 h-4 opacity-30 group-hover/link:opacity-100" />
                                                                 </a>
                                                             )}
-                                                            {ticket.logUrl && (
-                                                                <a href={ticket.logUrl} target="_blank" rel="noopener noreferrer" 
+                                                            {ticket.log_url && (
+                                                                <a href={ticket.log_url} target="_blank" rel="noopener noreferrer" 
                                                                 className="flex items-center gap-3 px-6 py-4 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-2xl text-sm font-black transition-all">
                                                                     <FileText className="w-5 h-5" /> 로그 파일 다운로드 <ExternalLink className="w-4 h-4 opacity-30" />
                                                                 </a>
@@ -299,7 +333,7 @@ export const CustomerSupport = () => {
                                                                     {ticket.reply}
                                                                 </p>
                                                                 <span className="text-[10px] font-black text-emerald-400 mt-4 block uppercase tracking-wider">
-                                                                    Replied at: {ticket.repliedAt?.toDate ? ticket.repliedAt.toDate().toLocaleString() : 'N/A'}
+                                                                    Replied at: {ticket.replied_at ? new Date(ticket.replied_at).toLocaleString() : 'N/A'}
                                                                 </span>
                                                             </div>
                                                         ) : (

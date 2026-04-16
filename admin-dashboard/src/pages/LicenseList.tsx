@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -14,8 +13,8 @@ interface License {
     product_id: string;
     buyer_name: string;
     status: 'active' | 'used' | 'unused' | 'expired' | 'blocked';
-    expire_date: any;
-    created_at: any;
+    expire_date: string;
+    created_at: string;
     bound_value?: string;
     price_sold?: number;
 }
@@ -25,17 +24,33 @@ export const LicenseList = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
+    const fetchLicenses = async () => {
+        const { data, error } = await supabase
+            .from('licenses')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching licenses:', error);
+        } else {
+            setLicenses(data as License[]);
+        }
+        setLoading(false);
+    };
+
     useEffect(() => {
-        const q = query(collection(db, 'licenses'), orderBy('created_at', 'desc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const licenseData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as License[];
-            setLicenses(licenseData);
-            setLoading(false);
-        });
-        return unsubscribe;
+        fetchLicenses();
+
+        const channel = supabase
+            .channel('license-list-sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'licenses' }, () => {
+                fetchLicenses();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     const filteredLicenses = licenses.filter(license =>

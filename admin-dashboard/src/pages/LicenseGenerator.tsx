@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Copy, Key, CheckCircle2, ChevronRight, Clock } from 'lucide-react';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db, auth as firebaseAuth } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const generateSerial = () => {
@@ -14,6 +14,7 @@ const generateSerial = () => {
 };
 
 export const LicenseGenerator = () => {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [generatedKey, setGeneratedKey] = useState('');
     const [formData, setFormData] = useState({
@@ -51,27 +52,24 @@ export const LicenseGenerator = () => {
             else if (formData.license_type === '1Y') expireDate.setFullYear(now.getFullYear() + 1);
             else if (formData.license_type === 'LIFETIME') expireDate.setFullYear(now.getFullYear() + 99);
 
-            await addDoc(collection(db, 'licenses'), {
-                ...formData,
-                buyer_name: isTest ? `${formData.buyer_name} (TEST)` : formData.buyer_name,
-                serial_key: serial,
-                expire_date: expireDate,
-                collection_limit: collectionLimit,
-                status: 'unused',
-                bound_value: null,
-                created_at: serverTimestamp(),
-                price_sold: Number(formData.price_sold) || 0
-            });
+            const { error } = await supabase
+                .from('licenses')
+                .insert([{
+                    ...formData,
+                    buyer_name: isTest ? `${formData.buyer_name} (TEST)` : formData.buyer_name,
+                    serial_key: serial,
+                    expire_date: expireDate.toISOString(),
+                    collection_limit: collectionLimit,
+                    status: 'unused',
+                    bound_value: null,
+                    price_sold: Number(formData.price_sold) || 0
+                }]);
+
+            if (error) throw error;
 
         } catch (error: any) {
-            const currentUser = firebaseAuth.currentUser;
-            console.error("Error creating license:", {
-                error,
-                uid: currentUser?.uid,
-                email: currentUser?.email,
-                authenticated: !!currentUser
-            });
-            alert(`발행 중 오류가 발생했습니다: ${error.message}\n(UID: ${currentUser?.uid || 'Not Logged In'})\n관리자에게 문의하거나 Firebase 설정을 확인해주세요.`);
+            console.error("Error creating license:", error);
+            alert(`발행 중 오류가 발생했습니다: ${error.message}\n(UID: ${user?.id || 'Not Logged In'})\n관리자에게 문의하거나 Supabase 설정을 확인해주세요.`);
             setGeneratedKey('');
         } finally {
             setLoading(false);

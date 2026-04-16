@@ -1,6 +1,4 @@
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { signInAnonymously } from 'firebase/auth';
-import { auth, db } from './lib/firebase';
+import { supabase } from './lib/supabase';
 
 const ADMINS = [
     'chiu01@naver.com',
@@ -9,26 +7,18 @@ const ADMINS = [
 
 export async function bootstrapAdmins() {
     try {
-        // Ensure we are signed in before writing (Rules usually require auth)
-        if (!auth.currentUser) {
-            console.log('🔑 No user found, signing in anonymously for bootstrap...');
-            await signInAnonymously(auth);
-        }
-
-        console.log('🚀 Starting admin bootstrap...');
+        console.log('🚀 Starting admin bootstrap for Supabase...');
         for (const email of ADMINS) {
             const emailKey = email.toLowerCase();
-            await setDoc(doc(db, 'admins', emailKey), {
-                email: emailKey,
-                addedAt: serverTimestamp()
-            });
-            console.log(`✅ Admin added to Firestore: ${emailKey}`);
+            const { error } = await supabase
+                .from('admins')
+                .upsert({ email: emailKey }, { onConflict: 'email' });
+            
+            if (error) throw error;
+            console.log(`✅ Admin added to Supabase: ${emailKey}`);
         }
-        console.log('✨ Admin bootstrap complete.');
+        console.log('✨ Supabase Admin bootstrap complete.');
     } catch (error: any) {
-        console.error('❌ Firestore Bootstrap Error:', error);
-        if (error.code === 'permission-denied') {
-            console.error('👉 Tip: Check your Firestore Security Rules. You might not have permission to write to the "admins" collection.');
-        }
+        console.error('❌ Supabase Bootstrap Error:', error);
     }
 }

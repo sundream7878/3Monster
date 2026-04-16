@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ChevronRight, Layers, Activity, Key, Smartphone, Monitor, Settings } from 'lucide-react';
@@ -30,18 +29,17 @@ export const Dashboard = () => {
     const [recentLicenses, setRecentLicenses] = useState<RecentLicense[]>([]);
     const [recentBuyers, setRecentBuyers] = useState<RecentBuyer[]>([]);
 
-    useEffect(() => {
-        // Dashboard Licenses Sync
-        const qLic = query(
-            collection(db, 'licenses'),
-            orderBy('created_at', 'desc'),
-            limit(5)
-        );
+    const fetchDashboardData = async () => {
+        // Fetch Recent Licenses
+        const { data: licenses } = await supabase
+            .from('licenses')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5);
 
-        const unsubscribeLic = onSnapshot(qLic, (snapshot) => {
-            const data = snapshot.docs.map(doc => {
-                const item = doc.data();
-                const expireDate = item.expire_date?.seconds ? new Date(item.expire_date.seconds * 1000) : null;
+        if (licenses) {
+            const mappedLicenses = licenses.map(item => {
+                const expireDate = item.expire_date ? new Date(item.expire_date) : null;
                 const isExpired = expireDate && expireDate < new Date();
 
                 let status = "사용 가능";
@@ -71,27 +69,36 @@ export const Dashboard = () => {
                     statusColor
                 };
             });
-            setRecentLicenses(data);
-        });
+            setRecentLicenses(mappedLicenses);
+        }
 
-        // Dashboard Buyers Sync
-        const qBuy = query(
-            collection(db, 'buyers'),
-            orderBy('created_at', 'desc'),
-            limit(5)
-        );
+        // Fetch Recent Buyers
+        const { data: buyers } = await supabase
+            .from('buyers')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5);
 
-        const unsubscribeBuy = onSnapshot(qBuy, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                name: doc.data().name,
-                channel: doc.data().channel || "Direct"
-            }));
-            setRecentBuyers(data);
-        });
+        if (buyers) {
+            setRecentBuyers(buyers.map(b => ({
+                name: b.name,
+                channel: b.channel || "Direct"
+            })));
+        }
+    };
+
+    useEffect(() => {
+        fetchDashboardData();
+
+        // Realtime Subscriptions
+        const licenseChannel = supabase
+            .channel('dashboard-sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'licenses' }, () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'buyers' }, () => fetchDashboardData())
+            .subscribe();
 
         return () => {
-            unsubscribeLic();
-            unsubscribeBuy();
+            supabase.removeChannel(licenseChannel);
         };
     }, []);
 
