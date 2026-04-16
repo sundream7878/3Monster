@@ -59,7 +59,7 @@ export const LicenseList = () => {
     );
 
     const getStatusInfo = (license: License) => {
-        const expireDate = license.expire_date?.seconds ? new Date(license.expire_date.seconds * 1000) : null;
+        const expireDate = license.expire_date ? new Date(license.expire_date) : null;
         const now = new Date();
         const isExpired = expireDate && expireDate < now;
 
@@ -136,7 +136,7 @@ export const LicenseList = () => {
                                         </div>
                                     </td>
                                     <td className="px-10 py-6 text-sm font-bold text-slate-500">
-                                        {lic.expire_date?.seconds ? format(new Date(lic.expire_date.seconds * 1000), 'yyyy.MM.dd') : '-'}
+                                        {lic.expire_date ? format(new Date(lic.expire_date), 'yyyy.MM.dd') : '-'}
                                     </td>
                                     <td className="px-10 py-6">
                                         <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black", status.color)}>
