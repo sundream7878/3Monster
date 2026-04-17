@@ -150,13 +150,18 @@ export const Login = () => {
                 await supabase.auth.signInAnonymously();
             }
             
-            const emailKey = email.toLowerCase();
             localStorage.setItem('user_email', emailKey);
             localStorage.setItem('buyer_email', emailKey); 
             localStorage.setItem('remember_email', emailKey); // 자동완성용 저장
             
+            console.log('🔄 Refreshing authentication role...');
             await refreshRole();
-            navigate('/');
+            
+            // 상태 업데이트가 리액트에 반영될 수 있도록 미세한 지연 추가
+            setTimeout(() => {
+                console.log('🚀 Navigating to dashboard...');
+                navigate('/', { replace: true });
+            }, 100);
         } catch (err: any) {
             setError('로그인 처리 중 오류가 발생했습니다.');
             console.error(err);

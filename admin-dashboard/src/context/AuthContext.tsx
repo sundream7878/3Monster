@@ -70,7 +70,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const detectedRole = await checkRole(userEmail);
             setRole(detectedRole);
             setEmail(userEmail.toLowerCase());
+            setUser(currentUser); // 유저 정보 명시적 세팅 (누락 예방)
             await registerUserMapping(currentUser.id, userEmail);
+            console.log('✅ Auth state synchronized successfully');
+        } else {
+            console.log('⚠️ refreshRole: userEmail or currentUser is missing', { userEmail, currentUser });
         }
     };
 
