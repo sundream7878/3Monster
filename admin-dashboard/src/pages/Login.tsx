@@ -6,7 +6,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { ChevronRight, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { bootstrapAdmins } from '../bootstrap-admins';
+
 import { useAuth } from '../context/AuthContext';
 
 export const Login = () => {
@@ -19,10 +19,7 @@ export const Login = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    // Bootstrap admins on load (Temporary - only runs until metadata is populated)
-    React.useEffect(() => {
-        bootstrapAdmins();
-    }, []);
+
 
     const handleSendOTP = async () => {
         if (!email) return;
