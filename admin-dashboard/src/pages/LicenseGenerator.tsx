@@ -18,7 +18,7 @@ export const LicenseGenerator = () => {
     const [loading, setLoading] = useState(false);
     const [generatedKey, setGeneratedKey] = useState('');
     const [formData, setFormData] = useState({
-        product_id: 'PlaceDB',
+        product_id: 'NPlace-DB',
         license_type: '1M',
         constraint_type: 'HWID',
         buyer_name: '',
@@ -98,7 +98,7 @@ export const LicenseGenerator = () => {
                                         value={formData.product_id}
                                         onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
                                     >
-                                        <option value="PlaceDB">🏢 PlaceDB</option>
+                                        <option value="NPlace-DB">🏢 NPlace-DB</option>
                                         <option value="CafeCrawler">☕ CafeCrawler</option>
                                         <option value="StealthComment">🤫 StealthComment</option>
                                     </select>
