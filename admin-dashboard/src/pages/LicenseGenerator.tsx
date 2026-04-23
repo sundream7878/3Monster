@@ -113,7 +113,6 @@ export const LicenseGenerator = () => {
                                         <option value="3M">3개월권 (Standard)</option>
                                         <option value="6M">6개월권 (Premium)</option>
                                         <option value="1Y">1년권 (VIP)</option>
-                                        <option value="TEST">무료 체험판 (1일)</option>
                                     </select>
                                 </div>
                             </div>
