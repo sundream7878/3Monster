@@ -13,7 +13,9 @@
 
 ## 3. 핵심 보안 및 운영 정책 (Security & Ops)
 1. **Cloud-First Security**: 모든 프로그램의 라이선스 및 체험판(Trial) 권한은 로컬 파일이 아닌 Supabase(Cloud)를 최종 권위(Source of Truth)로 삼는다. 유저의 HWID 기반 체험 이력은 서버에서 관리하며, 재설치나 파일 삭제를 통한 우회는 절대 허용하지 않는다.
-2. **Branding Consistency**: 모든 배포판 및 허브 앱의 명칭은 `NPlace-DB`로 통일하며, UI 테마는 몬스터 전용 다크 프리미엄(Deep Dark Premium)을 유지한다.
+2. **Network Robustness**: 윈도우 환경에서의 데드락(Hang) 방지를 위해, 모든 외부 소켓 연결 및 포트 체크 시 **최대 0.5초의 타임아웃** 설정을 의무화한다.
+3. **Logging Standard**: 프로그램의 모든 주요 진입점과 예외 상황은 `app_debug.log`에 표준화된 형식으로 기록하여, 블랙박스 형태의 디버깅을 지원한다.
+4. **Branding Consistency**: 모든 배포판 및 허브 앱의 명칭은 `NPlace-DB`로 통일하며, UI 테마는 몬스터 전용 다크 프리미엄(Deep Dark Premium)을 유지한다.
 
 ## 4. 지식의 보존
 - 작업 중 발견된 새로운 기술적 팩트나 DB 스키마 변경 사항은 즉시 관련 명세서에 기록하여, 다음 세션의 AI가 맥락을 잃지 않게 한다.
