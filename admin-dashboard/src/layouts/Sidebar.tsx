@@ -14,6 +14,7 @@ export const Sidebar = () => {
     ];
 
     const buyerNavItems = [
+        { icon: LayoutDashboard, label: '쇼룸 (홈)', href: '/' },
         { icon: HelpCircle, label: '고객센터', href: '/support' },
     ];
 

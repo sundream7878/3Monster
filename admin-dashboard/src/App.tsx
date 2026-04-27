@@ -7,6 +7,7 @@ import { LicenseGenerator } from './pages/LicenseGenerator';
 import { LicenseList } from './pages/LicenseList';
 import { CustomerSupport } from './pages/CustomerSupport';
 import { Login } from './pages/Login';
+import { UserDashboard } from './pages/UserDashboard';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -60,8 +61,9 @@ function AppRoutes() {
                 {/* Buyer Routes */}
                 {role === 'buyer' && (
                     <>
-                        <Route path="*" element={<Navigate to="/support" replace />} />
-                        <Route index element={<Navigate to="/support" replace />} />
+                        <Route index element={<UserDashboard />} />
+                        <Route path="dashboard" element={<UserDashboard />} />
+                        <Route path="*" element={<Navigate to="/" replace />} />
                     </>
                 )}
             </Route>

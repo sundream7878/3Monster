@@ -38,6 +38,50 @@ export const CustomerSupport = () => {
     const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     
+    // License Verification State
+    const [hasLicense, setHasLicense] = useState<boolean | null>(null);
+    const [verifyingLicense, setVerifyingLicense] = useState(false);
+
+    // Read URL params for auto-filling
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.hash.split('?')[1]);
+        const urlEmail = params.get('email');
+        const urlLog = params.get('log');
+        const urlType = params.get('type');
+
+        if (urlEmail) setContactEmail(urlEmail);
+        if (urlLog) setDescription(`[자동 복사된 로그]\n${urlLog}\n\n[증상 상세]\n`);
+        if (urlType) setIssueType(urlType);
+    }, []);
+
+    // Check license whenever email changes
+    React.useEffect(() => {
+        const checkLicense = async () => {
+            if (!contactEmail || !contactEmail.includes('@')) {
+                setHasLicense(null);
+                return;
+            }
+
+            setVerifyingLicense(true);
+            try {
+                const { data, error } = await supabase
+                    .from('licenses')
+                    .select('id')
+                    .eq('email', contactEmail.toLowerCase())
+                    .limit(1);
+                
+                setHasLicense(!error && data && data.length > 0);
+            } catch (e) {
+                setHasLicense(false);
+            } finally {
+                setVerifyingLicense(false);
+            }
+        };
+
+        const timer = setTimeout(checkLicense, 500);
+        return () => clearTimeout(timer);
+    }, [contactEmail]);
+    
     // Admin features state
     const [adminReply, setAdminReply] = useState('');
     const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
@@ -398,8 +442,25 @@ export const CustomerSupport = () => {
                                     type="email"
                                     value={contactEmail}
                                     onChange={e => setContactEmail(e.target.value)}
-                                    className="h-14 bg-slate-50 border-none rounded-2xl font-bold focus:ring-2 focus:ring-indigo-100"
+                                    className={cn(
+                                        "h-14 bg-slate-50 border-none rounded-2xl font-bold focus:ring-2 transition-all",
+                                        hasLicense ? "ring-2 ring-emerald-500 bg-emerald-50/30" : "focus:ring-indigo-100"
+                                    )}
                                 />
+                                {verifyingLicense && <p className="text-[10px] font-bold text-slate-400 mt-1 ml-2 animate-pulse">인증 확인 중...</p>}
+                                {hasLicense === true && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, x: -10 }} 
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="flex items-center gap-1.5 mt-2 ml-2 text-emerald-600"
+                                    >
+                                        <ShieldCheck className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-tight">Verified Premium User</span>
+                                    </motion.div>
+                                )}
+                                {hasLicense === false && (
+                                    <p className="text-[10px] font-bold text-slate-400 mt-1 ml-2 italic">일반/체험판 사용자</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">문의 유형</label>
@@ -416,8 +477,13 @@ export const CustomerSupport = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">상세 증상 및 내용</label>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between px-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">상세 증상 및 내용</label>
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-black animate-bounce shadow-sm border border-amber-100">
+                                    <Zap className="w-3 h-3" /> 빠른 해결을 위해 스샷을 꼭 첨부해주세요!
+                                </div>
+                            </div>
                             <textarea
                                 required
                                 value={description}
@@ -425,6 +491,19 @@ export const CustomerSupport = () => {
                                 placeholder="문제 상황이나 증상을 최대한 자세히 적어주세요."
                                 className="w-full min-h-[160px] rounded-2xl bg-slate-50 p-5 text-sm font-bold border-none outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
                             />
+                        </div>
+
+                        <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 flex items-start gap-3">
+                            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+                                <ImageIcon className="w-4 h-4" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-xs font-black text-indigo-900">스크린샷 찍는 가장 빠른 방법</p>
+                                <p className="text-[11px] font-bold text-indigo-600/70 leading-relaxed">
+                                    <span className="bg-indigo-600 text-white px-1.5 py-0.5 rounded mx-0.5 font-black">Win + Shift + S</span>를 눌러 에러 화면을 찍은 후, <br />
+                                    저장할 필요 없이 아래 첨부칸이나 채팅창에 바로 붙여넣으세요!
+                                </p>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
