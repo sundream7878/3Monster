@@ -23,6 +23,16 @@ import { cn } from '../lib/utils';
 import { Modal } from '../components/ui/Modal';
 import { motion } from 'framer-motion';
 
+interface ThreadMessage {
+    id: string;
+    sender: 'user' | 'admin';
+    sender_email: string;
+    text: string;
+    image_url?: string | null;
+    log_url?: string | null;
+    created_at: string;
+}
+
 export const CustomerSupport = () => {
     const { user, email: verifiedEmail, role, refreshRole } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,6 +50,18 @@ export const CustomerSupport = () => {
     const [tickets, setTickets] = useState<any[]>([]);
     const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Reply/Thread states
+    const [replyText, setReplyText] = useState('');
+    const [replyImage, setReplyImage] = useState<File | null>(null);
+    const [replyLog, setReplyLog] = useState<File | null>(null);
+    const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+
+    React.useEffect(() => {
+        setReplyText('');
+        setReplyImage(null);
+        setReplyLog(null);
+    }, [expandedTicketId]);
     
     // License Verification States
     const [purchasedLicenses, setPurchasedLicenses] = useState<any[]>([]);
@@ -117,9 +139,7 @@ export const CustomerSupport = () => {
         return () => clearTimeout(timer);
     }, [contactEmail, kmongNickname]);
     
-    // Admin features state
-    const [adminReply, setAdminReply] = useState('');
-    const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
+
 
     const fetchTickets = async () => {
         if (!user) return;
@@ -265,29 +285,78 @@ export const CustomerSupport = () => {
         }
     };
 
-    const handleUpdateStatus = async (ticketId: string) => {
-        if (!isAdmin || !adminReply.trim()) return;
-        
-        setUpdatingTicketId(ticketId);
+    const parseThread = (ticket: any): ThreadMessage[] => {
+        if (!ticket.reply) return [];
         try {
-            const { error } = await supabase
+            const parsed = JSON.parse(ticket.reply);
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+        } catch (e) {
+            // Fail silent
+        }
+        
+        return [{
+            id: 'legacy',
+            sender: 'admin',
+            sender_email: 'admin@3monster.net',
+            text: ticket.reply,
+            image_url: null,
+            log_url: null,
+            created_at: ticket.replied_at || ticket.created_at
+        }];
+    };
+
+    const handleSubmitReply = async (ticket: any, nextStatus: 'open' | 'closed') => {
+        if (!replyText.trim() && !replyImage && !replyLog) {
+            alert("내용을 입력하거나 파일을 첨부해주세요.");
+            return;
+        }
+
+        setIsSubmittingReply(true);
+        try {
+            let imageUrl = null;
+            let logUrl = null;
+
+            if (replyImage) imageUrl = await handleUploadFile(replyImage, 'replies/images');
+            if (replyLog) logUrl = await handleUploadFile(replyLog, 'replies/logs');
+
+            const currentThread = parseThread(ticket);
+
+            const newMessage: ThreadMessage = {
+                id: Date.now().toString(),
+                sender: isAdmin ? 'admin' : 'user',
+                sender_email: verifiedEmail || user?.email || 'unknown@3monster.net',
+                text: replyText,
+                image_url: imageUrl,
+                log_url: logUrl,
+                created_at: new Date().toISOString()
+            };
+
+            const updatedThread = [...currentThread, newMessage];
+            
+            const { error: updateError } = await supabase
                 .from('support_tickets')
                 .update({
-                    reply: adminReply,
-                    status: 'closed',
+                    reply: JSON.stringify(updatedThread),
+                    status: nextStatus,
                     replied_at: new Date().toISOString()
                 })
-                .eq('id', ticketId);
+                .eq('id', ticket.id);
 
-            if (error) throw error;
+            if (updateError) throw updateError;
+
+            setReplyText('');
+            setReplyImage(null);
+            setReplyLog(null);
+            await fetchTickets();
             
-            setAdminReply('');
-            setExpandedTicketId(null);
-        } catch (err) {
-            console.error("Error updating ticket:", err);
-            alert("상태 업데이트 중 오류가 발생했습니다.");
+            alert("댓글이 등록되었습니다.");
+        } catch (err: any) {
+            console.error("Error submitting reply:", err);
+            alert(`댓글 등록 중 오류가 발생했습니다: ${err.message}`);
         } finally {
-            setUpdatingTicketId(null);
+            setIsSubmittingReply(false);
         }
     };
 
@@ -447,45 +516,169 @@ export const CustomerSupport = () => {
                                                     )}
                                                 </div>
 
-                                                {/* Admin Reply Section */}
-                                                {(isAdmin || ticket.reply) && (
-                                                    <div className="pt-8 border-t border-slate-50">
-                                                        <div className="flex items-center gap-2 mb-6 text-emerald-600">
-                                                            <CheckCircle2 className="w-5 h-5" />
-                                                            <h3 className="font-black text-lg">관리자 답변</h3>
-                                                        </div>
-                                                        
-                                                        {ticket.reply ? (
-                                                            <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100">
-                                                                <p className="text-emerald-900 font-bold leading-relaxed whitespace-pre-wrap">
-                                                                    {ticket.reply}
-                                                                </p>
-                                                                <span className="text-[10px] font-black text-emerald-400 mt-4 block uppercase tracking-wider">
-                                                                    Replied at: {ticket.replied_at ? new Date(ticket.replied_at).toLocaleString() : 'N/A'}
-                                                                </span>
-                                                            </div>
+                                                {/* Thread & Reply Section */}
+                                                <div className="pt-8 border-t border-slate-100 space-y-6">
+                                                    <div className="flex items-center gap-2 text-indigo-600">
+                                                        <CheckCircle2 className="w-5 h-5" />
+                                                        <h3 className="font-black text-lg">대화 기록 및 댓글</h3>
+                                                    </div>
+
+                                                    {/* Thread History */}
+                                                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 flex flex-col">
+                                                        {parseThread(ticket).length === 0 ? (
+                                                            <p className="text-slate-400 font-bold text-sm text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-100">
+                                                                아직 등록된 댓글이 없습니다. 아래 폼에서 첫 대화를 시작해 보세요!
+                                                            </p>
                                                         ) : (
-                                                            <div className="space-y-4">
-                                                                <textarea
-                                                                    placeholder="문의에 대한 답변을 입력해주세요..."
-                                                                    value={adminReply}
-                                                                    onChange={(e) => setAdminReply(e.target.value)}
-                                                                    className="w-full min-h-[140px] rounded-2xl bg-slate-50 p-5 text-sm font-bold border-none outline-none focus:ring-2 focus:ring-emerald-100 transition-all resize-none"
+                                                            parseThread(ticket).map((msg) => {
+                                                                const isMsgAdmin = msg.sender === 'admin';
+                                                                return (
+                                                                    <div 
+                                                                        key={msg.id} 
+                                                                        className={cn(
+                                                                            "flex flex-col max-w-[85%] p-4 rounded-2xl shadow-sm border transition-all duration-300",
+                                                                            isMsgAdmin 
+                                                                                ? "bg-emerald-50/50 border-emerald-100/50 ml-auto rounded-tr-none" 
+                                                                                : "bg-indigo-50/40 border-indigo-100/30 mr-auto rounded-tl-none"
+                                                                        )}
+                                                                    >
+                                                                        <div className="flex items-center gap-2 mb-2 justify-between">
+                                                                            <span className={cn(
+                                                                                "text-xs font-black",
+                                                                                isMsgAdmin ? "text-emerald-700" : "text-indigo-700"
+                                                                            )}>
+                                                                                {isMsgAdmin ? "🛡️ 관리자" : `👤 ${maskEmail(msg.sender_email)}`}
+                                                                            </span>
+                                                                            <span className="text-[10px] font-bold text-slate-400">
+                                                                                {new Date(msg.created_at).toLocaleString()}
+                                                                            </span>
+                                                                        </div>
+                                                                        
+                                                                        <p className={cn(
+                                                                            "text-sm font-semibold leading-relaxed whitespace-pre-wrap",
+                                                                            isMsgAdmin ? "text-emerald-900" : "text-slate-700"
+                                                                        )}>
+                                                                            {msg.text}
+                                                                        </p>
+
+                                                                        {/* Uploaded attachments in reply */}
+                                                                        {(msg.image_url || msg.log_url) && (
+                                                                            <div className="mt-3 pt-3 border-t border-slate-100/50 flex flex-wrap gap-2">
+                                                                                {msg.image_url && (
+                                                                                    <a href={msg.image_url} target="_blank" rel="noopener noreferrer" 
+                                                                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-100 rounded-lg text-xs font-black transition-all">
+                                                                                        <ImageIcon className="w-3.5 h-3.5 text-slate-500" /> 스크린샷 보기
+                                                                                    </a>
+                                                                                )}
+                                                                                {msg.log_url && (
+                                                                                    <a href={msg.log_url} target="_blank" rel="noopener noreferrer" 
+                                                                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-100 rounded-lg text-xs font-black transition-all">
+                                                                                        <FileText className="w-3.5 h-3.5 text-slate-500" /> 로그 다운로드
+                                                                                    </a>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        )}
+                                                    </div>
+
+                                                    {/* New Message Input Form */}
+                                                    <div className="space-y-4 pt-4 border-t border-slate-100/80">
+                                                        <div className="relative">
+                                                            <textarea
+                                                                placeholder="추가 문의사항이나 답변을 여기에 입력해주세요..."
+                                                                value={replyText}
+                                                                onChange={(e) => setReplyText(e.target.value)}
+                                                                className="w-full min-h-[100px] rounded-2xl bg-slate-50 p-5 text-sm font-bold border-none outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none placeholder:text-slate-350 text-slate-800"
+                                                            />
+                                                        </div>
+
+                                                        {/* Attachment status inside input form */}
+                                                        <div className="flex flex-wrap gap-3">
+                                                            <div className="relative group">
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    onChange={e => setReplyImage(e.target.files?.[0] || null)}
+                                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                                 />
-                                                                <div className="flex justify-end">
+                                                                <div className="h-10 px-4 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-150 hover:border-indigo-300 flex items-center transition-all">
+                                                                    <ImageIcon className="w-4 h-4 text-slate-400 mr-2 group-hover:text-indigo-500" />
+                                                                    <span className="text-xs font-black text-slate-500 truncate max-w-[150px]">
+                                                                        {replyImage ? replyImage.name : '사진 첨부'}
+                                                                    </span>
+                                                                    {replyImage && (
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReplyImage(null); }}
+                                                                            className="ml-2 text-slate-400 hover:text-rose-500 font-bold text-xs z-20"
+                                                                        >
+                                                                            ✕
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="relative group">
+                                                                <input
+                                                                    type="file"
+                                                                    accept=".log,.txt"
+                                                                    onChange={e => setReplyLog(e.target.files?.[0] || null)}
+                                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                                />
+                                                                <div className="h-10 px-4 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-150 hover:border-indigo-300 flex items-center transition-all">
+                                                                    <FileText className="w-4 h-4 text-slate-400 mr-2 group-hover:text-indigo-500" />
+                                                                    <span className="text-xs font-black text-slate-500 truncate max-w-[150px]">
+                                                                        {replyLog ? replyLog.name : '로그 파일 첨부'}
+                                                                    </span>
+                                                                    {replyLog && (
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReplyLog(null); }}
+                                                                            className="ml-2 text-slate-400 hover:text-rose-500 font-bold text-xs z-20"
+                                                                        >
+                                                                            ✕
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Action Buttons */}
+                                                        <div className="flex justify-end gap-3 pt-2">
+                                                            {isAdmin ? (
+                                                                <>
                                                                     <Button 
-                                                                        onClick={() => handleUpdateStatus(ticket.id)}
-                                                                        isLoading={updatingTicketId === ticket.id}
-                                                                        disabled={!adminReply.trim()}
-                                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-12 text-sm font-black shadow-lg shadow-emerald-100"
+                                                                        onClick={() => handleSubmitReply(ticket, 'open')}
+                                                                        isLoading={isSubmittingReply}
+                                                                        disabled={!replyText.trim() && !replyImage && !replyLog}
+                                                                        className="bg-slate-200 hover:bg-slate-350 text-slate-700 rounded-xl px-6 h-12 text-xs font-black transition-all"
+                                                                    >
+                                                                        댓글 등록 (대기유지)
+                                                                    </Button>
+                                                                    <Button 
+                                                                        onClick={() => handleSubmitReply(ticket, 'closed')}
+                                                                        isLoading={isSubmittingReply}
+                                                                        disabled={!replyText.trim() && !replyImage && !replyLog}
+                                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 h-12 text-xs font-black shadow-lg shadow-emerald-100 transition-all"
                                                                     >
                                                                         답변 완료 및 해결완료 처리
                                                                     </Button>
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                                </>
+                                                            ) : (
+                                                                <Button 
+                                                                    onClick={() => handleSubmitReply(ticket, 'open')}
+                                                                    isLoading={isSubmittingReply}
+                                                                    disabled={!replyText.trim() && !replyImage && !replyLog}
+                                                                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 h-12 text-sm font-black shadow-lg shadow-indigo-100 transition-all"
+                                                                >
+                                                                    댓글 등록하기
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
                                         </div>
                                     )}
