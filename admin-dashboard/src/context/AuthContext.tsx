@@ -2,7 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
-export type UserRole = 'admin' | 'buyer' | null;
+export type UserRole = 'admin' | 'buyer' | 'user' | null;
+
 
 interface AuthContextType {
     user: User | null;
@@ -33,24 +34,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkRole = async (userEmail: string) => {
         try {
             console.log(`🔍 Checking role for: ${userEmail}`);
-            const { data, error } = await supabase
+            // 1. Check admins table
+            const { data: adminData, error: adminError } = await supabase
                 .from('admins')
                 .select('email')
                 .eq('email', userEmail.toLowerCase())
                 .single();
             
-            if (error && error.code !== 'PGRST116') { // PGRST116 is 'no rows'
-                throw error;
+            if (adminError && adminError.code !== 'PGRST116') { // PGRST116 is 'no rows'
+                throw adminError;
             }
 
-            const isAdm = !!data;
-            console.log(`📊 Role result: ${isAdm ? 'admin' : 'buyer'}`);
-            return isAdm ? 'admin' : 'buyer';
+            if (adminData) {
+                console.log(`📊 Role result: admin`);
+                return 'admin';
+            }
+
+            // 2. Check buyers table
+            const { data: buyerData, error: buyerError } = await supabase
+                .from('buyers')
+                .select('email, channel')
+                .eq('email', userEmail.toLowerCase())
+                .single();
+
+            if (buyerError && buyerError.code !== 'PGRST116') {
+                throw buyerError;
+            }
+
+            if (buyerData) {
+                const isPending = buyerData.channel && buyerData.channel.includes('Pending');
+                if (isPending) {
+                    console.log(`📊 Role result: user (Pending approval)`);
+                    return 'user';
+                }
+                console.log(`📊 Role result: buyer`);
+                return 'buyer';
+            }
+
+            // 3. Check licenses table
+            const { data: licenseData, error: licenseError } = await supabase
+                .from('licenses')
+                .select('id')
+                .eq('email', userEmail.toLowerCase())
+                .limit(1);
+
+            if (licenseError) {
+                throw licenseError;
+            }
+
+            if (licenseData && licenseData.length > 0) {
+                console.log(`📊 Role result: buyer (via licenses table)`);
+                return 'buyer';
+            }
+
+            console.log(`📊 Role result: user (Not a registered buyer)`);
+            return 'user';
         } catch (error) {
-            console.error('❌ Error checking admin role:', error);
-            return 'buyer';
+            console.error('❌ Error checking role:', error);
+            return 'user';
         }
     };
+
 
     const registerUserMapping = async (uid: string, userEmail: string) => {
         try {
@@ -102,14 +146,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         const handleUserChange = async (supabaseUser: User) => {
-            const userEmail = localStorage.getItem('user_email');
+            const userEmail = localStorage.getItem('user_email') || supabaseUser.email;
             if (userEmail) {
                 const detectedRole = await checkRole(userEmail);
                 setRole(detectedRole);
                 setEmail(userEmail.toLowerCase());
                 await registerUserMapping(supabaseUser.id, userEmail);
             } else {
-                setRole('buyer');
+                setRole('user');
                 setEmail(null);
             }
             setUser(supabaseUser);

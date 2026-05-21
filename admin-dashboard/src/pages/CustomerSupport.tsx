@@ -24,7 +24,7 @@ import { Modal } from '../components/ui/Modal';
 import { motion } from 'framer-motion';
 
 export const CustomerSupport = () => {
-    const { user, email: verifiedEmail, role } = useAuth();
+    const { user, email: verifiedEmail, role, refreshRole } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -32,6 +32,7 @@ export const CustomerSupport = () => {
     
     const [contactEmail, setContactEmail] = useState(localStorage.getItem('user_email') || localStorage.getItem('buyer_email') || '');
     const [issueType, setIssueType] = useState('bug');
+    const [kmongNickname, setKmongNickname] = useState('');
     const [description, setDescription] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [logFile, setLogFile] = useState<File | null>(null);
@@ -40,9 +41,10 @@ export const CustomerSupport = () => {
     const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     
-    // License Verification State
-    const [hasLicense, setHasLicense] = useState<boolean | null>(null);
-    const [verifyingLicense, setVerifyingLicense] = useState(false);
+    // License Verification States
+    const [purchasedLicenses, setPurchasedLicenses] = useState<any[]>([]);
+    const [selectedLicenseId, setSelectedLicenseId] = useState('');
+    const [isCheckingLicenses, setIsCheckingLicenses] = useState(false);
 
     // Read URL params for auto-filling
     React.useEffect(() => {
@@ -56,33 +58,64 @@ export const CustomerSupport = () => {
         if (urlType) setIssueType(urlType);
     }, []);
 
-    // Check license whenever email changes
+    // Check license whenever email or nickname changes
     React.useEffect(() => {
-        const checkLicense = async () => {
+        const checkLicenses = async () => {
             if (!contactEmail || !contactEmail.includes('@')) {
-                setHasLicense(null);
+                setPurchasedLicenses([]);
                 return;
             }
 
-            setVerifyingLicense(true);
+            setIsCheckingLicenses(true);
             try {
-                const { data, error } = await supabase
+                // 1. Try matching via email first
+                const { data: emailData, error: emailError } = await supabase
                     .from('licenses')
-                    .select('id')
-                    .eq('email', contactEmail.toLowerCase())
-                    .limit(1);
-                
-                setHasLicense(!error && data && data.length > 0);
+                    .select('id, product_id, serial_key, buyer_name, email')
+                    .eq('email', contactEmail.toLowerCase());
+
+                if (emailError) throw emailError;
+
+                if (emailData && emailData.length > 0) {
+                    setPurchasedLicenses(emailData);
+                    if (emailData.length === 1) {
+                        setSelectedLicenseId(emailData[0].id);
+                    }
+                    setIsCheckingLicenses(false);
+                    return;
+                }
+
+                // 2. Try matching via Kmong nickname if provided
+                if (kmongNickname.trim()) {
+                    const { data: nameData, error: nameError } = await supabase
+                        .from('licenses')
+                        .select('id, product_id, serial_key, buyer_name, email')
+                        .eq('buyer_name', kmongNickname.trim());
+
+                    if (nameError) throw nameError;
+
+                    if (nameData && nameData.length > 0) {
+                        setPurchasedLicenses(nameData);
+                        if (nameData.length === 1) {
+                            setSelectedLicenseId(nameData[0].id);
+                        }
+                    } else {
+                        setPurchasedLicenses([]);
+                    }
+                } else {
+                    setPurchasedLicenses([]);
+                }
             } catch (e) {
-                setHasLicense(false);
+                console.error("Error verifying licenses:", e);
+                setPurchasedLicenses([]);
             } finally {
-                setVerifyingLicense(false);
+                setIsCheckingLicenses(false);
             }
         };
 
-        const timer = setTimeout(checkLicense, 500);
+        const timer = setTimeout(checkLicenses, 500);
         return () => clearTimeout(timer);
-    }, [contactEmail]);
+    }, [contactEmail, kmongNickname]);
     
     // Admin features state
     const [adminReply, setAdminReply] = useState('');
@@ -153,13 +186,22 @@ export const CustomerSupport = () => {
             if (imageFile) imageUrl = await handleUploadFile(imageFile, 'images');
             if (logFile) logUrl = await handleUploadFile(logFile, 'logs');
 
+            const selectedLic = purchasedLicenses.find(l => l.id === selectedLicenseId);
+            let finalDescription = description;
+
+            if (selectedLic) {
+                finalDescription = `[문의 제품: ${selectedLic.product_id} (시리얼: ${selectedLic.serial_key})]\n${finalDescription}`;
+            } else if (kmongNickname.trim()) {
+                finalDescription = `[수동 구매 인증 요청: 크몽 닉네임 - ${kmongNickname.trim()}]\n${finalDescription}`;
+            }
+
             const { error: insertError } = await supabase
                 .from('support_tickets')
                 .insert([{
                     uid: user.id,
                     email: contactEmail.toLowerCase(),
                     issue_type: issueType,
-                    description,
+                    description: finalDescription,
                     image_url: imageUrl,
                     log_url: logUrl,
                     status: 'open'
@@ -167,11 +209,51 @@ export const CustomerSupport = () => {
 
             if (insertError) throw insertError;
 
+            // Handle automatic matching / binding
+            if (selectedLic) {
+                const isKmongMatched = !selectedLic.email || selectedLic.email.toLowerCase() !== contactEmail.toLowerCase();
+                
+                if (isKmongMatched) {
+                    await supabase
+                        .from('licenses')
+                        .update({ email: contactEmail.toLowerCase() })
+                        .eq('id', selectedLic.id);
+                }
+
+                // Register standard buyer (instantly approved)
+                const buyerName = selectedLic.buyer_name || kmongNickname.trim() || verifiedEmail?.split('@')[0] || 'Unknown';
+                await supabase
+                    .from('buyers')
+                    .upsert({
+                        email: contactEmail.toLowerCase(),
+                        name: buyerName,
+                        channel: 'Kmong',
+                        created_at: new Date().toISOString()
+                    }, { onConflict: 'email' });
+            } else if (kmongNickname.trim()) {
+                // Register as pending for manual verification
+                await supabase
+                    .from('buyers')
+                    .upsert({
+                        email: contactEmail.toLowerCase(),
+                        name: kmongNickname.trim(),
+                        channel: 'Kmong (Pending)',
+                        created_at: new Date().toISOString()
+                    }, { onConflict: 'email' });
+            }
+
             setSuccess(true);
+
+            if (refreshRole) {
+                await refreshRole();
+            }
+
             setTimeout(() => {
                 setSuccess(false);
                 setIsModalOpen(false);
                 setDescription('');
+                setKmongNickname('');
+                setSelectedLicenseId('');
                 setImageFile(null);
                 setLogFile(null);
             }, 2000);
@@ -446,21 +528,21 @@ export const CustomerSupport = () => {
                                     onChange={e => setContactEmail(e.target.value)}
                                     className={cn(
                                         "h-14 bg-slate-50 border-none rounded-2xl font-bold focus:ring-2 transition-all",
-                                        hasLicense ? "ring-2 ring-emerald-500 bg-emerald-50/30" : "focus:ring-indigo-100"
+                                        purchasedLicenses.length > 0 ? "ring-2 ring-emerald-500 bg-emerald-50/30" : "focus:ring-indigo-100"
                                     )}
                                 />
-                                {verifyingLicense && <p className="text-[10px] font-bold text-slate-400 mt-1 ml-2 animate-pulse">인증 확인 중...</p>}
-                                {hasLicense === true && (
+                                {isCheckingLicenses && <p className="text-[10px] font-bold text-slate-400 mt-1 ml-2 animate-pulse">인증 정보 확인 중...</p>}
+                                {!isCheckingLicenses && purchasedLicenses.length > 0 && (
                                     <motion.div 
                                         initial={{ opacity: 0, x: -10 }} 
                                         animate={{ opacity: 1, x: 0 }}
                                         className="flex items-center gap-1.5 mt-2 ml-2 text-emerald-600"
                                     >
                                         <ShieldCheck className="w-4 h-4" />
-                                        <span className="text-xs font-black uppercase tracking-tight">Verified Premium User</span>
+                                        <span className="text-xs font-black uppercase tracking-tight">인증된 구매자 (제품 {purchasedLicenses.length}개 보유)</span>
                                     </motion.div>
                                 )}
-                                {hasLicense === false && (
+                                {!isCheckingLicenses && purchasedLicenses.length === 0 && (
                                     <p className="text-[10px] font-bold text-slate-400 mt-1 ml-2 italic">일반/체험판 사용자</p>
                                 )}
                             </div>
@@ -478,6 +560,48 @@ export const CustomerSupport = () => {
                                 </select>
                             </div>
                         </div>
+
+                        {/* 2nd filter: Kmong nickname input if email matches nothing */}
+                        {purchasedLicenses.length === 0 && (
+                            <div className="space-y-2 animate-in fade-in duration-200">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">
+                                    크몽 닉네임 <span className="text-indigo-500 font-bold">*2차 자동 매칭용</span>
+                                </label>
+                                <Input
+                                    placeholder="크몽 닉네임을 입력하시면 구매하신 상품이 자동 매칭됩니다."
+                                    value={kmongNickname}
+                                    onChange={e => setKmongNickname(e.target.value)}
+                                    className="h-14 bg-slate-50 border-none rounded-2xl font-bold focus:ring-2 focus:ring-indigo-100 transition-all"
+                                />
+                                {kmongNickname.trim() && !isCheckingLicenses && purchasedLicenses.length === 0 && (
+                                    <p className="text-[10px] text-amber-500 font-bold mt-1 ml-2">
+                                        ⚠️ 입력하신 닉네임으로 등록된 제품을 찾지 못했습니다. 제출하시면 관리자가 확인 후 수동으로 연동해 드립니다.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Dropdown to select matching licenses */}
+                        {purchasedLicenses.length > 0 && (
+                            <div className="space-y-2 animate-in fade-in duration-200">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">
+                                    문의하실 제품 선택 <span className="text-emerald-500 font-bold">*필수</span>
+                                </label>
+                                <select
+                                    required
+                                    className="w-full h-14 rounded-2xl bg-slate-50 px-5 text-sm font-bold border-none outline-none focus:ring-2 focus:ring-emerald-100 transition-all appearance-none"
+                                    value={selectedLicenseId}
+                                    onChange={e => setSelectedLicenseId(e.target.value)}
+                                >
+                                    <option value="">-- 문의 대상 제품을 선택해주세요 --</option>
+                                    {purchasedLicenses.map((lic) => (
+                                        <option key={lic.id} value={lic.id}>
+                                            {lic.product_id} ({lic.serial_key ? lic.serial_key.substring(0, 8) + '...' : '시리얼 없음'}) - {lic.buyer_name || '이름 없음'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between px-2">

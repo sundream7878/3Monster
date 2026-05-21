@@ -75,7 +75,7 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                                 className="h-10 px-5 rounded-xl font-bold flex items-center gap-2 border-slate-200"
                             >
                                 <HelpCircle className="w-4 h-4" />
-                                고객센터
+                                고객센터/문의
                             </Button>
                         </Link>
 
@@ -91,11 +91,10 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                             </Link>
                         )}
 
-                        {user && email ? (
+                        {user && email && (
                             <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
                                 <div className="text-right">
-                                    <p className="text-xs text-slate-400 font-bold">인증된 사용자</p>
-                                    <p className="text-sm text-slate-700 font-black">{email}</p>
+                                    <p className="text-sm text-slate-700 font-black">{email.split('@')[0]}</p>
                                 </div>
                                 <Button 
                                     variant="ghost" 
@@ -107,12 +106,6 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                                     <LogOut className="w-4 h-4" />
                                 </Button>
                             </div>
-                        ) : (
-                            <Link to="/support">
-                                <Button className="h-10 px-6 rounded-xl font-black bg-slate-900 hover:bg-slate-800 text-white">
-                                    인증 및 로그인
-                                </Button>
-                            </Link>
                         )}
                     </div>
 
@@ -152,7 +145,7 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                         <div className="flex flex-col gap-3">
                             <Link to="/support" onClick={() => setMobileMenuOpen(false)} className="w-full">
                                 <Button variant="outline" className="w-full h-11 font-bold flex items-center justify-center gap-2 border-slate-200">
-                                    <HelpCircle className="w-4 h-4" /> 고객센터
+                                    <HelpCircle className="w-4 h-4" /> 고객센터/문의
                                 </Button>
                             </Link>
                             
@@ -164,11 +157,11 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                                 </Link>
                             )}
 
-                            {user && email ? (
+                            {user && email && (
                                 <div className="space-y-3 pt-2">
                                     <div className="bg-slate-50 p-3 rounded-xl">
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase">Authorized Email</p>
-                                        <p className="text-sm text-slate-800 font-black">{email}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase">Authorized ID</p>
+                                        <p className="text-sm text-slate-800 font-black">{email.split('@')[0]}</p>
                                     </div>
                                     <Button 
                                         variant="ghost" 
@@ -178,12 +171,6 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                                         <LogOut className="w-4 h-4" /> 로그아웃
                                     </Button>
                                 </div>
-                            ) : (
-                                <Link to="/support" onClick={() => setMobileMenuOpen(false)} className="w-full">
-                                    <Button className="w-full h-11 font-black bg-slate-900 hover:bg-slate-800 text-white">
-                                        인증 및 로그인
-                                    </Button>
-                                </Link>
                             )}
                         </div>
                     </div>
