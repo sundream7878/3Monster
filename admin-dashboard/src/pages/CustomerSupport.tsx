@@ -710,7 +710,7 @@ export const CustomerSupport = () => {
                     </div>
 
                 {/* Right side: Ticket List */}
-                <div className="lg:col-span-7 space-y-6">
+                <div className="space-y-6">
                     {/* List View Main */}
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="relative flex-1 group">
