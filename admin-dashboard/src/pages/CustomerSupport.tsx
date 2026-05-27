@@ -396,6 +396,32 @@ export const CustomerSupport = () => {
         return `${masked}@${domain}`;
     };
 
+    const parseTicketInfo = (ticket: any) => {
+        const desc = ticket.description || '';
+        const match = desc.match(/\[문의 제품:\s*([^\]\s\()]+)/);
+        const product = match ? match[1] : '공통';
+        
+        let typeLabel = '';
+        switch (ticket.issue_type) {
+            case 'bug':
+                typeLabel = '버그/오류';
+                break;
+            case 'feature':
+                typeLabel = '기능제안';
+                break;
+            case 'license':
+                typeLabel = '라이선스';
+                break;
+            case 'other':
+                typeLabel = '일반문의';
+                break;
+            default:
+                typeLabel = ticket.issue_type || '기타';
+        }
+        return { product, typeLabel };
+    };
+
+
     const isAdmin = role === 'admin';
     const userEmail = verifiedEmail || localStorage.getItem('user_email') || user?.email;
     const filteredTickets = tickets.filter(t => {
@@ -415,7 +441,7 @@ export const CustomerSupport = () => {
     });
 
     return (
-        <div className="w-full bg-[#f8fafc] py-6 px-4 min-h-screen">
+        <div className="w-full bg-gradient-to-br from-indigo-100/80 via-slate-200/90 to-purple-100/70 py-12 px-4 min-h-screen">
             <div className="max-w-7xl mx-auto space-y-5 pb-10">
 
             {/* Main Content Layout */}
@@ -772,27 +798,39 @@ export const CustomerSupport = () => {
                                                     }
                                                 }}
                                             >
-                                                <div className="flex items-center gap-2">
-                                                    <span className={cn(
-                                                        "w-1.5 h-1.5 rounded-full",
-                                                        ticket.status === 'open' ? "bg-indigo-500" : "bg-emerald-500"
-                                                    )} title={ticket.status === 'open' ? '처리 대기중' : '진행 완료'} />
-                                                    
-                                                    <span className="text-slate-700 font-medium text-xs">
-                                                        {canViewDetail ? ticket.email : maskEmail(ticket.email)}
-                                                    </span>
-                                                </div>
-                                                
-                                                <div className="flex items-center gap-2.5">
-                                                    <span className="text-[10px] text-slate-400 font-normal">
-                                                        {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
-                                                    </span>
-                                                    {canViewDetail && (
-                                                        <div className="w-5 h-5 rounded bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
-                                                            {isExpanded ? <ChevronUp className="w-3 h-3 text-indigo-500" /> : <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-indigo-500" />}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                 <div className="flex items-center gap-2">
+                                                     <span className={cn(
+                                                         "w-1.5 h-1.5 rounded-full",
+                                                         ticket.status === 'open' ? "bg-indigo-500" : "bg-emerald-500"
+                                                     )} title={ticket.status === 'open' ? '처리 대기중' : '진행 완료'} />
+                                                     
+                                                     <span className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
+                                                         <span className="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold border border-indigo-100/40">
+                                                             {parseTicketInfo(ticket).product}
+                                                         </span>
+                                                         <span className="text-slate-700 font-bold">
+                                                             {parseTicketInfo(ticket).typeLabel}
+                                                         </span>
+                                                     </span>
+                                                 </div>
+                                                 
+                                                 <div className="flex items-center gap-2.5">
+                                                     <span className="text-[11px] text-slate-700 font-bold">
+                                                         {ticket.created_at 
+                                                             ? (() => {
+                                                                 const d = new Date(ticket.created_at);
+                                                                 const pad = (n: number) => String(n).padStart(2, '0');
+                                                                 return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                                                               })()
+                                                             : 'N/A'
+                                                         }
+                                                     </span>
+                                                     {canViewDetail && (
+                                                         <div className="w-5 h-5 rounded bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
+                                                             {isExpanded ? <ChevronUp className="w-3 h-3 text-indigo-500" /> : <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-indigo-500" />}
+                                                         </div>
+                                                     )}
+                                                 </div>
                                             </div>
                                             
                                             {isExpanded && canViewDetail && (
@@ -938,7 +976,7 @@ export const CustomerSupport = () => {
                                                                                 onClick={() => handleSubmitReply(ticket, 'closed')}
                                                                                 isLoading={isSubmittingReply}
                                                                                 disabled={!replyText.trim() && !replyImage && !replyLog}
-                                                                                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 h-8 text-xs font-semibold transition-all"
+                                                                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-750 border border-emerald-200 rounded-lg px-4 h-8 text-xs font-bold transition-all"
                                                                             >
                                                                                 답변 완료 및 해결완료 처리
                                                                             </Button>
@@ -948,10 +986,11 @@ export const CustomerSupport = () => {
                                                                             onClick={() => handleSubmitReply(ticket, 'open')}
                                                                             isLoading={isSubmittingReply}
                                                                             disabled={isDisabledReply || (!replyText.trim() && !replyImage && !replyLog)}
-                                                                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-5 h-8 text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-750 border border-indigo-200 rounded-lg px-5 h-8 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                                         >
                                                                             댓글 등록하기
                                                                         </Button>
+
                                                                     )}
                                                                 </div>
                                                             </div>
