@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Card } from './ui/Card';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
-import { Mail, ChevronRight, KeyRound, AlertTriangle } from 'lucide-react';
+import { OtpInput } from './ui/OtpInput';
+import { Mail, ChevronRight, KeyRound, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SupportWrapperProps {
@@ -17,12 +18,14 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
     const [otp, setOtp] = useState('');
     const [otpStep, setOtpStep] = useState(1); // 1: Email, 2: OTP
     const [error, setError] = useState('');
+    const [infoMessage, setInfoMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSendOTP = async () => {
         if (!email) return;
         setLoading(true);
         setError('');
+        setInfoMessage('');
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
@@ -103,7 +106,7 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
                 throw new Error(errorMessage);
             }
 
-            alert(`인증번호가 메일로 전송되었습니다.`);
+            setInfoMessage('인증번호가 메일로 전송되었습니다.');
             setOtpStep(2);
         } catch (err: any) {
             console.error('OTP Error:', err);
@@ -113,10 +116,12 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
         }
     };
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleLogin = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (loading) return;
         setLoading(true);
         setError('');
+        setInfoMessage('');
         try {
             const { data: otpData, error: otpError } = await supabase
                 .from('otps')
@@ -133,6 +138,7 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
             if (new Date() > expiresAt) {
                 setError('인증번호가 만료되었습니다. 다시 시도해주세요.');
                 setOtpStep(1);
+                setOtp('');
                 return;
             }
 
@@ -155,6 +161,13 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
             setLoading(false);
         }
     };
+
+    // Auto submit when OTP reaches 6 digits
+    useEffect(() => {
+        if (otp.length === 6 && otpStep === 2 && !loading) {
+            handleLogin();
+        }
+    }, [otp, otpStep]);
 
     // If already authorized, directly render the children (Customer Support content)
     if (user && authEmail) {
@@ -200,57 +213,62 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
                                 />
                             </div>
                             
-                            {otpStep === 1 ? (
-                                <Button 
-                                    type="button" 
-                                    variant="outline" 
-                                    className="w-full h-12 font-bold" 
-                                    onClick={handleSendOTP}
-                                    isLoading={loading}
-                                    disabled={!email}
-                                >
-                                    <Mail className="w-4 h-4 mr-2" /> 인증번호 전송
-                                </Button>
-                            ) : (
+                            {otpStep === 2 && (
                                 <div className="space-y-2 animate-in fade-in duration-200">
                                     <div className="flex justify-between items-center px-1">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">인증번호 (6자리)</label>
                                         <button 
                                             type="button" 
-                                            onClick={() => setOtpStep(1)}
+                                            onClick={() => { setOtpStep(1); setOtp(''); }}
                                             className="text-[10px] font-black text-indigo-600 hover:underline"
                                         >
                                             이메일 변경
                                         </button>
                                     </div>
-                                    <Input
-                                        type="text"
-                                        placeholder="000000"
+                                    <OtpInput
                                         value={otp}
-                                        onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                                        required
-                                        className="h-12 bg-slate-50 border-none focus-visible:bg-white text-center text-xl tracking-[0.5em] font-black"
+                                        onChange={setOtp}
+                                        disabled={loading}
                                     />
                                 </div>
                             )}
                         </motion.div>
                     </AnimatePresence>
 
+                    {infoMessage && (
+                        <div className="flex gap-2 items-start text-xs text-emerald-600 font-bold bg-emerald-50 p-4 rounded-xl animate-in fade-in duration-200">
+                            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500 mt-0.5" />
+                            <p className="leading-relaxed">{infoMessage}</p>
+                        </div>
+                    )}
+
                     {error && (
-                        <div className="flex gap-2 items-start text-xs text-red-500 font-bold bg-red-50 p-4 rounded-xl">
+                        <div className="flex gap-2 items-start text-xs text-red-500 font-bold bg-red-50 p-4 rounded-xl animate-in fade-in duration-200">
                             <AlertTriangle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
                             <p className="leading-relaxed">{error}</p>
                         </div>
                     )}
 
-                    <Button 
-                        type="submit" 
-                        className="w-full h-12 text-sm font-black bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/10" 
-                        isLoading={loading}
-                        disabled={otpStep === 1}
-                    >
-                        인증 완료 후 고객센터 입장 <ChevronRight className="ml-2 w-4 h-4" />
-                    </Button>
+                    {otpStep === 1 ? (
+                        <Button 
+                            type="button" 
+                            className="w-full h-12 text-sm font-black bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/10" 
+                            onClick={handleSendOTP}
+                            isLoading={loading}
+                            disabled={!email}
+                        >
+                            <Mail className="w-4 h-4 mr-2" /> 인증번호 전송
+                        </Button>
+                    ) : (
+                        <Button 
+                            type="submit" 
+                            className="w-full h-12 text-sm font-black bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/10" 
+                            isLoading={loading}
+                            disabled={otp.length !== 6}
+                        >
+                            인증 완료 후 3Monster 입장 <ChevronRight className="ml-2 w-4 h-4" />
+                        </Button>
+                    )}
                 </form>
             </Card>
         </div>

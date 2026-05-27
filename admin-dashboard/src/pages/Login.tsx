@@ -1,32 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { ChevronRight, Mail } from 'lucide-react';
+import { OtpInput } from '../components/ui/OtpInput';
+import { ChevronRight, Mail, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuth } from '../context/AuthContext';
 
 export const Login = () => {
     const { refreshRole } = useAuth();
-    // 로컬 스토리지에서 저장된 이메일 불러오기
     const [email, setEmail] = useState(() => localStorage.getItem('remember_email') || '');
     const [otp, setOtp] = useState('');
     const [otpStep, setOtpStep] = useState(1); // 1: Email, 2: OTP
     const [error, setError] = useState('');
+    const [infoMessage, setInfoMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-
-
 
     const handleSendOTP = async () => {
         if (!email) return;
         setLoading(true);
         setError('');
+        setInfoMessage('');
         try {
-            // 익명 로그인이 필요한 경우 (Supabase 정책상 인증된 세션에서만 쓰기 허용시)
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
                 await supabase.auth.signInAnonymously();
@@ -109,7 +108,7 @@ export const Login = () => {
                 throw new Error(errorMessage);
             }
 
-            alert(`인증번호가 메일로 전송되었습니다.`);
+            setInfoMessage('인증번호가 메일로 전송되었습니다.');
             setOtpStep(2);
         } catch (err: any) {
             console.error('OTP Error:', err);
@@ -119,10 +118,12 @@ export const Login = () => {
         }
     };
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleLogin = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (loading) return;
         setLoading(true);
         setError('');
+        setInfoMessage('');
         try {
             const { data: otpData, error: otpError } = await supabase
                 .from('otps')
@@ -139,6 +140,7 @@ export const Login = () => {
             if (new Date() > expiresAt) {
                 setError('인증번호가 만료되었습니다. 다시 시도해주세요.');
                 setOtpStep(1);
+                setOtp('');
                 return;
             }
 
@@ -150,12 +152,11 @@ export const Login = () => {
             const emailKey = email.toLowerCase();
             localStorage.setItem('user_email', emailKey);
             localStorage.setItem('buyer_email', emailKey); 
-            localStorage.setItem('remember_email', emailKey); // 자동완성용 저장
+            localStorage.setItem('remember_email', emailKey);
             
             console.log('🔄 Refreshing authentication role...');
             await refreshRole();
             
-            // 상태 업데이트가 리액트에 반영될 수 있도록 미세한 지연 추가
             setTimeout(() => {
                 console.log('🚀 Navigating to dashboard...');
                 navigate('/', { replace: true });
@@ -167,6 +168,13 @@ export const Login = () => {
             setLoading(false);
         }
     };
+
+    // Auto submit when OTP reaches 6 digits
+    useEffect(() => {
+        if (otp.length === 6 && otpStep === 2 && !loading) {
+            handleLogin();
+        }
+    }, [otp, otpStep]);
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-[#F4F6FB] px-4">
@@ -210,56 +218,61 @@ export const Login = () => {
                                     />
                                 </div>
                                 
-                                {otpStep === 1 ? (
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        className="w-full h-14 font-black" 
-                                        onClick={handleSendOTP}
-                                        isLoading={loading}
-                                        disabled={!email}
-                                    >
-                                        <Mail className="w-4 h-4 mr-2" /> 인증번호 전송
-                                    </Button>
-                                ) : (
+                                {otpStep === 2 && (
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center px-1">
                                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">인증번호 (6자리)</label>
                                             <button 
                                                 type="button" 
-                                                onClick={() => setOtpStep(1)}
+                                                onClick={() => { setOtpStep(1); setOtp(''); }}
                                                 className="text-[10px] font-black text-primary hover:underline"
                                             >
                                                 이메일 변경
                                             </button>
                                         </div>
-                                        <Input
-                                            type="text"
-                                            placeholder="000000"
+                                        <OtpInput
                                             value={otp}
-                                            onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                                            required
-                                            className="h-14 bg-slate-50 border-none focus-visible:bg-white text-center text-2xl tracking-[1em] font-black"
+                                            onChange={setOtp}
+                                            disabled={loading}
                                         />
                                     </div>
                                 )}
                             </motion.div>
                         </AnimatePresence>
 
+                        {infoMessage && (
+                            <div className="flex gap-2 items-start text-xs text-emerald-600 font-bold bg-emerald-50 p-4 rounded-xl animate-in fade-in duration-200">
+                                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500 mt-0.5" />
+                                <p className="leading-relaxed">{infoMessage}</p>
+                            </div>
+                        )}
+
                         {error && (
-                            <p className="text-xs text-red-500 font-bold text-center bg-red-50 py-3 rounded-2xl">
+                            <p className="text-xs text-red-500 font-bold text-center bg-red-50 py-3 rounded-2xl animate-in fade-in duration-200">
                                 {error}
                             </p>
                         )}
 
-                        <Button 
-                            type="submit" 
-                            className="w-full h-14 text-base font-black shadow-premium" 
-                            isLoading={loading}
-                            disabled={otpStep === 1}
-                        >
-                            로그인 <ChevronRight className="ml-2 w-4 h-4" />
-                        </Button>
+                        {otpStep === 1 ? (
+                            <Button 
+                                type="button" 
+                                className="w-full h-14 text-base font-black shadow-premium" 
+                                onClick={handleSendOTP}
+                                isLoading={loading}
+                                disabled={!email}
+                            >
+                                <Mail className="w-4 h-4 mr-2" /> 인증번호 전송
+                            </Button>
+                        ) : (
+                            <Button 
+                                type="submit" 
+                                className="w-full h-14 text-base font-black shadow-premium" 
+                                isLoading={loading}
+                                disabled={otp.length !== 6}
+                            >
+                                로그인 <ChevronRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        )}
                     </form>
                 </Card>
                 <p className="text-center mt-10 text-[10px] text-slate-300 font-black tracking-widest uppercase">
