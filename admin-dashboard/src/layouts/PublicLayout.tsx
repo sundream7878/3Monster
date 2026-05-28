@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, LayoutDashboard, HelpCircle, Menu, X } from 'lucide-react';
+import { LayoutDashboard, HelpCircle, Menu, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-    const { user, email, role, logout } = useAuth();
+    const { user, email, role } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -91,19 +91,14 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                         )}
 
                         {user && email && (
-                            <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
-                                <div className="text-right">
-                                    <p className="text-sm text-slate-700 font-black">{email.split('@')[0]}</p>
-                                </div>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => logout()}
-                                    className="h-10 w-10 text-slate-400 hover:text-slate-900 rounded-xl"
-                                    title="로그아웃"
+                            <div className="flex items-center pl-2 border-l border-slate-200">
+                                <Link 
+                                    to="/profile" 
+                                    className="text-sm text-slate-700 font-black hover:text-indigo-600 transition-colors"
+                                    title="프로필 및 설정"
                                 >
-                                    <LogOut className="w-4 h-4" />
-                                </Button>
+                                    {email.split('@')[0]}
+                                </Link>
                             </div>
                         )}
                     </div>
@@ -159,17 +154,14 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
 
                             {user && email && (
                                 <div className="space-y-3 pt-2">
-                                    <div className="bg-slate-50 p-3 rounded-xl">
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase">Authorized ID</p>
-                                        <p className="text-sm text-slate-800 font-black">{email.split('@')[0]}</p>
-                                    </div>
-                                    <Button 
-                                        variant="ghost" 
-                                        onClick={() => { logout(); setMobileMenuOpen(false); }}
-                                        className="w-full h-11 text-rose-600 hover:bg-rose-50 font-bold flex items-center justify-center gap-2 rounded-xl"
+                                    <Link 
+                                        to="/profile" 
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="block bg-slate-50 p-3 rounded-xl border border-slate-100 text-left hover:bg-slate-100 transition-colors"
                                     >
-                                        <LogOut className="w-4 h-4" /> 로그아웃
-                                    </Button>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase">내 프로필 & 설정</p>
+                                        <p className="text-sm text-slate-800 font-black mt-0.5">{email.split('@')[0]}</p>
+                                    </Link>
                                 </div>
                             )}
                         </div>

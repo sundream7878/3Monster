@@ -8,6 +8,7 @@ import { LicenseGenerator } from './pages/LicenseGenerator';
 import { LicenseList } from './pages/LicenseList';
 import { CustomerSupport } from './pages/CustomerSupport';
 import { Login } from './pages/Login';
+import { Profile } from './pages/Profile';
 import { SupportWrapper } from './components/SupportWrapper';
 
 function AppRoutes() {
@@ -25,6 +26,15 @@ function AppRoutes() {
                 <PublicLayout>
                     <SupportWrapper>
                         <CustomerSupport />
+                    </SupportWrapper>
+                </PublicLayout>
+            } />
+
+            {/* Profile Page */}
+            <Route path="/profile" element={
+                <PublicLayout>
+                    <SupportWrapper>
+                        <Profile />
                     </SupportWrapper>
                 </PublicLayout>
             } />
