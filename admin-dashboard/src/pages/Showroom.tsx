@@ -359,25 +359,7 @@ export const Showroom = () => {
                     <p className="text-slate-400 font-bold text-base lg:text-lg leading-relaxed max-w-2xl">
                         타겟 고객 DB 수집부터 채널 활성화, 원격 제어까지 비즈니스 성장을 위한 올인원 솔루션을 만나보세요. 3Monster 패밀리 앱은 최고의 성능과 보안성을 보장합니다.
                     </p>
-                    <div className="flex flex-wrap gap-4 pt-6">
-                        <Link to="/support">
-                            <Button 
-                                className="h-16 px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg rounded-2xl shadow-indigo-500/20 shadow-2xl transition-all flex items-center gap-3"
-                            >
-                                <MessageSquare className="w-5 h-5" /> 1:1 고객센터 문의하기
-                            </Button>
-                        </Link>
-                        <Button 
-                            variant="outline"
-                            onClick={() => {
-                                const target = document.getElementById('marketing-monster');
-                                if (target) target.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                            className="h-16 px-10 border-2 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white font-black text-lg rounded-2xl transition-all"
-                        >
-                            제품 리스트 구경하기
-                        </Button>
-                    </div>
+
                 </div>
                 {/* Background Decoration */}
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-indigo-500/10 to-transparent pointer-events-none" />

@@ -99,6 +99,19 @@
 | **channel** | TEXT | NULLABLE | 최초 연동/가입 채널 (예: `Kmong`, `Direct`, `Kmong (Pending)`) |
 | **created_at** | TIMESTAMPTZ | DEFAULT now() | 가입/등록 일시 |
 
+### [테이블명: notifications]
+- **목적**: 마이페이지 '알림' 토글이 활성화된 사용자들을 대상으로 하는 전체 공지 및 개별 권한별 알림 메시지 관리.
+- **테이블 구조**:
+
+| 컬럼명 | 타입 | 제약 조건 | 설명 |
+| :--- | :--- | :--- | :--- |
+| **id** | BIGINT | PRIMARY KEY, IDENTITY | 알림 고유 번호 |
+| **title** | TEXT | NOT NULL | 알림 제목 |
+| **content** | TEXT | NOT NULL | 알림 본문 내용 |
+| **target_role** | TEXT | DEFAULT 'all' | 타겟 권한 그룹 (`all`, `admin`, `buyer`, `user`) |
+| **created_at** | TIMESTAMPTZ | DEFAULT now() | 알림 작성/발송 일시 |
+| **sent_by** | TEXT | NOT NULL | 발송한 관리자 이메일 |
+
 ---
 
 ### [비고: 미사용 테이블 정리]
@@ -107,4 +120,5 @@
 - **buyers**: `users` 테이블 통합 후 삭제 완료되었습니다.
 
 ---
-*Since 2026-05-27 by Monster*
+*Since 2026-05-28 by Monster*
+

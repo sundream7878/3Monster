@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Key, Users, LogOut, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, Key, Users, LogOut, HelpCircle, Bell } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,9 +7,10 @@ export const Sidebar = () => {
     const { logout, role } = useAuth();
 
     const adminNavItems = [
-        { icon: LayoutDashboard, label: '대시보드', href: '/' },
-        { icon: Key, label: '발행 도구', href: '/generator' },
-        { icon: Users, label: '전체 관리', href: '/licenses' },
+        { icon: LayoutDashboard, label: '대시보드', href: '/admin' },
+        { icon: Key, label: '발행 도구', href: '/admin/generator' },
+        { icon: Users, label: '전체 관리', href: '/admin/licenses' },
+        { icon: Bell, label: '알림 관리', href: '/admin/notifications' },
         { icon: HelpCircle, label: '고객센터', href: '/support' },
     ];
 
