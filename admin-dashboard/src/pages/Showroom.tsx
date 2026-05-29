@@ -428,8 +428,10 @@ export const Showroom = () => {
                                             <div className="flex items-center gap-2">
                                                 {product.badge && (
                                                     <span className={cn(
-                                                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
-                                                        "bg-indigo-50 text-indigo-600"
+                                                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                                                        product.badge.includes('예정')
+                                                            ? "bg-amber-50 text-amber-650 border-amber-200/60"
+                                                            : "bg-emerald-50 text-emerald-650 border-emerald-200/60"
                                                     )}>
                                                         {product.badge}
                                                     </span>
