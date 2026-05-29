@@ -117,24 +117,44 @@ const productCategories = [
         actionCopy: '조건 없이 100% 무료로 일상의 가려운 곳 긁어보기',
         products: [
             {
-                id: 'convenience-toolkit',
-                title: "일상 편의 툴킷",
-                subtitle: "결정 장애 해결, 유튜브 필터 등 편의 앱 허브",
-                description: "거창한 비즈니스 툴 대신, 이미지 일괄 리사이징, '오늘 뭐 먹지?', 유튜브 어그로 및 스팸 댓글 필터링 등 일상에서 바로 활용 가능한 미니 도구 모음입니다.",
-                icon: Zap,
+                id: 'photo-organizer',
+                title: "사진 정리",
+                subtitle: "기기 내 흩어진 사진들을 일괄 정리 및 최적화",
+                description: "스마트폰이나 PC에 쌓인 수천 장의 사진들을 원하는 기준에 따라 자동 분류하고, 중복 및 흔들린 사진을 정리하여 기기 용량을 획기적으로 늘려줍니다.",
+                icon: ImageIcon,
                 color: "from-emerald-500 to-teal-600",
                 badge: "100% Free",
-                features: ["유튜브 광고/스팸 댓글 자동 필터", "원클릭 대용량 이미지 변환", "결정 장애 극복용 AI 추천"]
+                features: ["중복/유사 사진 탐지 및 삭제", "촬영 날짜/위치별 폴더 분류", "원클릭 고효율 이미지 리사이징"]
+            },
+            {
+                id: 'food-picker',
+                title: "오늘 뭐 먹지?",
+                subtitle: "결정 장애 해결을 위한 스마트 메뉴 추천",
+                description: "식사 시간마다 찾아오는 결정 장애를 단번에 날려줍니다. 오늘 날씨, 사용자의 기호, 최근 먹은 메뉴 데이터 등을 반영하여 최적의 식사 메뉴를 제안합니다.",
+                icon: MessageCircle,
+                color: "from-teal-500 to-emerald-600",
+                badge: "Popular Utility",
+                features: ["빅데이터 기반 룰렛 추천", "사용자 식사 취향 맞춤 학습", "주변 인기 식당 위치 탐색"]
+            },
+            {
+                id: 'youtube-filter',
+                title: "유튜브 어그로 필터",
+                subtitle: "자극적이고 허위 사실이 가득한 영상 필터링",
+                description: "조회수만을 유도하는 허위/과장 광고성 썸네일과 스팸성 댓글, 알맹이 없는 영상을 필터링하여 쾌적하고 낭비 없는 유튜브 시청 환경을 구축해 줍니다.",
+                icon: Monitor,
+                color: "from-cyan-500 to-blue-600",
+                badge: "Clean Stream",
+                features: ["어그로 키워드 감지 시스템", "스팸/도배성 댓글 완전 필터", "사용자 맞춤형 블랙리스트 지정"]
             },
             {
                 id: 'finance-assistant',
                 title: "AI 가계부 비서",
-                subtitle: "사진 한 장으로 끝내는 스마트 가계부 관리",
-                description: "소비 영수증이나 지출 내역서 이미지를 간편하게 전송하면, AI가 알아서 파싱하여 카테고리별 분석 및 스마트 소비 습관 보고서를 자동 생성해 줍니다.",
-                icon: MessageCircle,
-                color: "from-teal-500 to-emerald-600",
-                badge: "Easy Utility",
-                features: ["영수증 OCR 정밀 파싱", "카테고리 지출 자동 분류", "예산 관리 및 알림 비서"]
+                subtitle: "영수증 사진만으로 자동 완성되는 소비 리포트",
+                description: "수기 입력의 번거로움 없이, 소비 영수증이나 지출 승인 문자를 캡처해 올리면 AI 비서가 카테고리 분류부터 자산 리포트까지 자동으로 완성해 줍니다.",
+                icon: FileText,
+                color: "from-purple-500 to-indigo-650",
+                badge: "Smart Finance",
+                features: ["초정밀 OCR 영수증 파싱", "소비 행태 자동 분류 및 분석", "스마트 예산 경고 비서 알림"]
             }
         ]
     }
