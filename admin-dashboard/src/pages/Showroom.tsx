@@ -45,7 +45,7 @@ const productCategories = [
                 description: "네이버 플레이스 상의 업체 연락처, 이메일, 홈페이지 주소를 포함한 고퀄리티 가망 고객 정보를 실시간 정밀 파싱하여 즉각 영업 가능한 DB로 변환합니다.",
                 icon: MapPin,
                 color: "from-blue-600 to-indigo-700",
-                badge: "Best Seller",
+                badge: "26년 6월 출시",
                 features: ["실시간 지도 데이터 수집", "영업 시간/연락처 자동 분류", "원클릭 Excel 내보내기"]
             },
             {
@@ -55,7 +55,7 @@ const productCategories = [
                 description: "원하는 커뮤니티, 전문 블로그, 타겟 웹페이지의 주요 텍스트와 이미지 데이터를 정확히 긁어와 AI 및 마케팅용 핵심 데이터셋으로 가공해 줍니다.",
                 icon: Layers,
                 color: "from-indigo-500 to-purple-600",
-                badge: "AI Ready",
+                badge: "26년 7월 출시예정",
                 features: ["구조화된 웹 스크래핑 엔진", "게시글 및 댓글 본문 파싱", "CSV / JSON 포맷 저장"]
             },
             {
@@ -65,7 +65,7 @@ const productCategories = [
                 description: "AI 자연어로 회원 성향과 구매 내역을 정밀 검색하고, 필터링된 가망 고객들을 대상으로 SMS/이메일 자동 발송을 무료로 연동해 주는 통합 매니저입니다.",
                 icon: Monitor,
                 color: "from-blue-400 to-cyan-600",
-                badge: "Featured",
+                badge: "26년 7월 출시예정",
                 features: ["AI 대화형 고객 검색 필터", "무료 SMS/Email 발송 연동", "가망 고객 타겟 그룹 관리"]
             }
         ]
@@ -83,7 +83,7 @@ const productCategories = [
                 description: "마케터가 타겟으로 삼은 카페의 전체 게시글, 실시간 새글, 작성자의 댓글 활동 내역까지 완벽 분석하여 핵심 유저층의 데이터셋을 빌드합니다.",
                 icon: Smartphone,
                 color: "from-orange-500 to-rose-600",
-                badge: "Hot Buy",
+                badge: "26년 7월 출시예정",
                 features: ["전체 히스토리 분석 수집", "진성 회원 식별 및 패턴 추적", "실시간 신규 알림 연동"]
             },
             {
@@ -93,7 +93,7 @@ const productCategories = [
                 description: "작성되는 실시간 댓글을 분석하여 여론의 긍/부정 지수, 주요 키워드 트렌드, 커뮤니티 전반의 상호작용 피드백을 대시보드로 시각화해 줍니다.",
                 icon: FileText,
                 color: "from-pink-500 to-purple-600",
-                badge: "Analytics",
+                badge: "26년 7월 출시예정",
                 features: ["여론 감정선 시각 분석", "핵심 반응 키워드 분석", "실시간 대시보드 리포팅"]
             },
             {
@@ -103,7 +103,7 @@ const productCategories = [
                 description: "카페 활성화를 위한 이벤트 기여도, 회원별 참여 지수 등 정교한 지표 분석을 제공하여 실질적인 회원 행동량 성장을 유도할 수 있는 솔루션입니다.",
                 icon: BellRing,
                 color: "from-amber-500 to-orange-600",
-                badge: "Performance",
+                badge: "26년 7월 출시예정",
                 features: ["활동 활력 지표 진단", "이벤트 참여율 랭킹 산출", "맞춤형 활성화 솔루션 추천"]
             }
         ]
@@ -121,7 +121,7 @@ const productCategories = [
                 description: "스마트폰이나 PC에 쌓인 수천 장의 사진들을 원하는 기준에 따라 자동 분류하고, 중복 및 흔들린 사진을 정리하여 기기 용량을 획기적으로 늘려줍니다.",
                 icon: ImageIcon,
                 color: "from-emerald-500 to-teal-600",
-                badge: "100% Free",
+                badge: "26년 7월 출시예정",
                 features: ["중복/유사 사진 탐지 및 삭제", "촬영 날짜/위치별 폴더 분류", "원클릭 고효율 이미지 리사이징"]
             },
             {
@@ -131,7 +131,7 @@ const productCategories = [
                 description: "식사 시간마다 찾아오는 결정 장애를 단번에 날려줍니다. 오늘 날씨, 사용자의 기호, 최근 먹은 메뉴 데이터 등을 반영하여 최적의 식사 메뉴를 제안합니다.",
                 icon: MessageCircle,
                 color: "from-teal-500 to-emerald-600",
-                badge: "Popular Utility",
+                badge: "26년 7월 출시예정",
                 features: ["빅데이터 기반 룰렛 추천", "사용자 식사 취향 맞춤 학습", "주변 인기 식당 위치 탐색"]
             },
             {
@@ -141,7 +141,7 @@ const productCategories = [
                 description: "조회수만을 유도하는 허위/과장 광고성 썸네일과 스팸성 댓글, 알맹이 없는 영상을 필터링하여 쾌적하고 낭비 없는 유튜브 시청 환경을 구축해 줍니다.",
                 icon: Monitor,
                 color: "from-cyan-500 to-blue-600",
-                badge: "Clean Stream",
+                badge: "26년 7월 출시예정",
                 features: ["어그로 키워드 감지 시스템", "스팸/도배성 댓글 완전 필터", "사용자 맞춤형 블랙리스트 지정"]
             },
             {
@@ -151,7 +151,7 @@ const productCategories = [
                 description: "수기 입력의 번거로움 없이, 소비 영수증이나 지출 승인 문자를 캡처해 올리면 AI 비서가 카테고리 분류부터 자산 리포트까지 자동으로 완성해 줍니다.",
                 icon: FileText,
                 color: "from-purple-500 to-indigo-650",
-                badge: "Smart Finance",
+                badge: "26년 7월 출시예정",
                 features: ["초정밀 OCR 영수증 파싱", "소비 행태 자동 분류 및 분석", "스마트 예산 경고 비서 알림"]
             }
         ]
