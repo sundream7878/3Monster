@@ -292,7 +292,6 @@ export const Showroom = () => {
             setNewQuestionImage(null);
             setNewQuestionLog(null);
             await fetchQuestions(productId);
-            alert("질문이 등록되었습니다.");
         } catch (err: any) {
             console.error("Error submitting question:", err);
             alert(`질문 등록 중 오류가 발생했습니다: ${err.message}`);
@@ -558,73 +557,26 @@ export const Showroom = () => {
 
                                                     {/* 1. New Question Registration Form */}
                                                     {user ? (
-                                                        <form onSubmit={(e) => handleSubmitQuestion(product.id, e)} className="space-y-4 bg-white p-4 rounded-xl border border-indigo-50/50 shadow-sm text-left">
-                                                            <p className="text-[9px] font-black text-indigo-500 pl-1 uppercase tracking-wider">🙋‍♂️ 새 질문 등록</p>
-                                                            <div className="relative">
-                                                                <textarea
-                                                                    placeholder="제품에 대해 궁금한 점을 적어주세요. 개발진이 직접 답변해 드립니다."
-                                                                    value={newQuestionText}
-                                                                    onChange={(e) => setNewQuestionText(e.target.value)}
-                                                                    className="w-full min-h-[80px] rounded-xl bg-slate-50 p-3 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none placeholder:text-slate-300 text-slate-800"
-                                                                />
-                                                            </div>
-
-                                                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                                                <div className="flex gap-2">
-                                                                    <div className="relative group">
-                                                                        <input
-                                                                            type="file"
-                                                                            accept="image/*"
-                                                                            onChange={e => setNewQuestionImage(e.target.files?.[0] || null)}
-                                                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                                        />
-                                                                        <div className="h-8 px-2 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200/60 hover:border-indigo-300 flex items-center transition-all">
-                                                                            <ImageIcon className="w-3 h-3 text-slate-400 mr-1" />
-                                                                            <span className="text-[10px] font-black text-slate-500 truncate max-w-[80px]">
-                                                                                {newQuestionImage ? newQuestionImage.name : '사진 첨부'}
-                                                                            </span>
-                                                                            {newQuestionImage && (
-                                                                                <button 
-                                                                                    type="button"
-                                                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setNewQuestionImage(null); }}
-                                                                                    className="ml-1 text-slate-400 hover:text-rose-500 font-bold text-[10px] z-20"
-                                                                                >
-                                                                                    ✕
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="relative group">
-                                                                        <input
-                                                                            type="file"
-                                                                            accept=".log,.txt"
-                                                                            onChange={e => setNewQuestionLog(e.target.files?.[0] || null)}
-                                                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                                        />
-                                                                        <div className="h-8 px-2 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200/60 hover:border-indigo-300 flex items-center transition-all">
-                                                                            <FileText className="w-3 h-3 text-slate-400 mr-1" />
-                                                                            <span className="text-[10px] font-black text-slate-500 truncate max-w-[80px]">
-                                                                                {newQuestionLog ? newQuestionLog.name : '로그 첨부'}
-                                                                            </span>
-                                                                            {newQuestionLog && (
-                                                                                <button 
-                                                                                    type="button"
-                                                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setNewQuestionLog(null); }}
-                                                                                    className="ml-1 text-slate-400 hover:text-rose-500 font-bold text-[10px] z-20"
-                                                                                >
-                                                                                    ✕
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
+                                                        <form onSubmit={(e) => handleSubmitQuestion(product.id, e)} className="space-y-3 bg-white p-4 rounded-xl border border-indigo-50/50 shadow-sm text-left">
+                                                            <div className="flex justify-between items-center pb-1">
+                                                                <p className="text-[10px] font-black text-indigo-500 pl-1 uppercase tracking-wider flex items-center gap-1.5">
+                                                                    <span>🙋‍♂️</span> 새 질문 등록
+                                                                </p>
                                                                 <Button 
                                                                     type="submit" 
                                                                     isLoading={isSubmittingQuestion}
                                                                     className="h-8 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-100 transition-all"
                                                                 >
-                                                                    질문 등록
+                                                                    등록
                                                                 </Button>
+                                                            </div>
+                                                            <div className="relative">
+                                                                <textarea
+                                                                    placeholder="제품에 대해 궁금한 점을 적어주세요. 개발진이 직접 답변해 드립니다."
+                                                                    value={newQuestionText}
+                                                                    onChange={(e) => setNewQuestionText(e.target.value)}
+                                                                    className="w-full min-h-[75px] rounded-xl bg-slate-50 p-3 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none placeholder:text-slate-400 text-slate-800"
+                                                                />
                                                             </div>
                                                         </form>
                                                     ) : (
