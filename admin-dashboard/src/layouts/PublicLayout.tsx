@@ -40,7 +40,7 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
         <div className="min-h-screen bg-gradient-to-br from-indigo-100/80 via-slate-200/90 to-purple-100/70 flex flex-col font-sans">
             {/* Top Header */}
             <header className="sticky top-0 z-50 bg-white/90 backdrop-filter backdrop-blur-xl border-b border-slate-100/80 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 h-28 flex items-center justify-between">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     {/* Logo */}
                     <Link 
                         to="/" 
