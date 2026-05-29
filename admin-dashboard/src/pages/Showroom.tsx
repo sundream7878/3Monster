@@ -182,6 +182,7 @@ export const Showroom = () => {
 
     // Expanded Q&A thread inside product Q&A list
     const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
+    const [activeReplyBoxQuestionId, setActiveReplyBoxQuestionId] = useState<string | null>(null);
 
     const maskEmail = (email: string) => {
         if (!email) return 'unknown';
@@ -369,6 +370,7 @@ export const Showroom = () => {
             setReplyTextMap(prev => ({ ...prev, [ticket.id]: '' }));
             setReplyImageMap(prev => ({ ...prev, [ticket.id]: null }));
             setReplyLogMap(prev => ({ ...prev, [ticket.id]: null }));
+            setActiveReplyBoxQuestionId(null);
             
             if (activeQnaProductId) {
                 await fetchQuestions(activeQnaProductId);
@@ -665,9 +667,9 @@ export const Showroom = () => {
                                                                                 </div>
 
                                                                                 {/* Thread Timeline Messages */}
-                                                                                <div className="space-y-3 pt-3 border-t border-slate-100 flex flex-col">
+                                                                                <div className="space-y-3 pt-2.5 border-t border-slate-100 flex flex-col">
                                                                                     {thread.length === 0 ? (
-                                                                                        <p className="text-[10px] font-bold text-slate-400 text-center py-1 italic">아직 달린 답변이 없습니다.</p>
+                                                                                        <p className="text-[10px] font-medium text-slate-400 text-center py-0.5 italic">아직 달린 답변이 없습니다.</p>
                                                                                     ) : (
                                                                                         thread.map((msg) => {
                                                                                             const isMsgAdmin = msg.sender === 'admin';
@@ -722,79 +724,90 @@ export const Showroom = () => {
 
                                                                                 {/* Reply Form (Visible to Admin or Question Owner) */}
                                                                                 {canReply ? (
-                                                                                    <div className="pt-3 border-t border-slate-100 space-y-2">
-                                                                                        <textarea
-                                                                                            placeholder="추가 문의사항이나 답변을 입력해주세요..."
-                                                                                            value={replyTextMap[q.id] || ''}
-                                                                                            onChange={(e) => setReplyTextMap(prev => ({ ...prev, [q.id]: e.target.value }))}
-                                                                                            className="w-full min-h-[60px] rounded-lg bg-white p-2.5 text-xs font-bold border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none text-slate-800 placeholder:text-slate-300"
-                                                                                        />
-                                                                                        
-                                                                                        <div className="flex flex-wrap items-center justify-between gap-2">
-                                                                                            <div className="flex gap-1">
-                                                                                                <div className="relative group">
-                                                                                                    <input
-                                                                                                        type="file"
-                                                                                                        accept="image/*"
-                                                                                                        onChange={e => setReplyImageMap(prev => ({ ...prev, [q.id]: e.target.files?.[0] || null }))}
-                                                                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                                                                    />
-                                                                                                    <div className="h-7 px-2 rounded-md bg-white hover:bg-slate-50 border border-slate-200 flex items-center transition-all">
-                                                                                                        <ImageIcon className="w-3 h-3 text-slate-400 mr-1" />
-                                                                                                        <span className="text-[9px] font-black text-slate-500 truncate max-w-[60px]">
-                                                                                                            {replyImageMap[q.id] ? replyImageMap[q.id]?.name : '사진'}
-                                                                                                        </span>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <div className="relative group">
-                                                                                                    <input
-                                                                                                        type="file"
-                                                                                                        accept=".log,.txt"
-                                                                                                        onChange={e => setReplyLogMap(prev => ({ ...prev, [q.id]: e.target.files?.[0] || null }))}
-                                                                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                                                                    />
-                                                                                                    <div className="h-7 px-2 rounded-md bg-white hover:bg-slate-50 border border-slate-200 flex items-center transition-all">
-                                                                                                        <FileText className="w-3 h-3 text-slate-400 mr-1" />
-                                                                                                        <span className="text-[9px] font-black text-slate-500 truncate max-w-[60px]">
-                                                                                                            {replyLogMap[q.id] ? replyLogMap[q.id]?.name : '로그'}
-                                                                                                        </span>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                            </div>
+                                                                                    activeReplyBoxQuestionId === q.id ? (
+                                                                                        <div className="pt-3 border-t border-slate-100 space-y-2">
+                                                                                            <textarea
+                                                                                                placeholder="추가 문의사항이나 답변을 입력해주세요..."
+                                                                                                value={replyTextMap[q.id] || ''}
+                                                                                                onChange={(e) => setReplyTextMap(prev => ({ ...prev, [q.id]: e.target.value }))}
+                                                                                                className="w-full min-h-[60px] rounded-lg bg-white p-2.5 text-xs font-bold border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none text-slate-800 placeholder:text-slate-300"
+                                                                                            />
                                                                                             
-                                                                                            <div className="flex gap-2">
-                                                                                                {isAdmin ? (
-                                                                                                    <>
+                                                                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                                                <div className="flex gap-1">
+                                                                                                    <div className="relative group">
+                                                                                                        <input
+                                                                                                            type="file"
+                                                                                                            accept="image/*"
+                                                                                                            onChange={e => setReplyImageMap(prev => ({ ...prev, [q.id]: e.target.files?.[0] || null }))}
+                                                                                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                                                                        />
+                                                                                                        <div className="h-7 px-2 rounded-md bg-white hover:bg-slate-50 border border-slate-200 flex items-center transition-all">
+                                                                                                            <ImageIcon className="w-3 h-3 text-slate-400 mr-1" />
+                                                                                                            <span className="text-[9px] font-black text-slate-500 truncate max-w-[60px]">
+                                                                                                                {replyImageMap[q.id] ? replyImageMap[q.id]?.name : '사진'}
+                                                                                                            </span>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                    <div className="relative group">
+                                                                                                        <input
+                                                                                                            type="file"
+                                                                                                            accept=".log,.txt"
+                                                                                                            onChange={e => setReplyLogMap(prev => ({ ...prev, [q.id]: e.target.files?.[0] || null }))}
+                                                                                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                                                                        />
+                                                                                                        <div className="h-7 px-2 rounded-md bg-white hover:bg-slate-50 border border-slate-200 flex items-center transition-all">
+                                                                                                            <FileText className="w-3 h-3 text-slate-400 mr-1" />
+                                                                                                            <span className="text-[9px] font-black text-slate-500 truncate max-w-[60px]">
+                                                                                                                {replyLogMap[q.id] ? replyLogMap[q.id]?.name : '로그'}
+                                                                                                            </span>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                
+                                                                                                <div className="flex gap-2">
+                                                                                                    {isAdmin ? (
+                                                                                                        <>
+                                                                                                            <Button 
+                                                                                                                onClick={() => handleSubmitReply(q, 'open')}
+                                                                                                                isLoading={submittingReplyId === q.id}
+                                                                                                                disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id] && !replyLogMap[q.id]}
+                                                                                                                className="h-7 px-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[9px] font-black transition-all"
+                                                                                                            >
+                                                                                                                대기등록
+                                                                                                            </Button>
+                                                                                                            <Button 
+                                                                                                                onClick={() => handleSubmitReply(q, 'closed')}
+                                                                                                                isLoading={submittingReplyId === q.id}
+                                                                                                                disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id] && !replyLogMap[q.id]}
+                                                                                                                className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-emerald-100"
+                                                                                                            >
+                                                                                                                답변완료
+                                                                                                            </Button>
+                                                                                                        </>
+                                                                                                    ) : (
                                                                                                         <Button 
                                                                                                             onClick={() => handleSubmitReply(q, 'open')}
                                                                                                             isLoading={submittingReplyId === q.id}
                                                                                                             disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id] && !replyLogMap[q.id]}
-                                                                                                            className="h-7 px-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[9px] font-black transition-all"
+                                                                                                            className="h-7 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-indigo-100"
                                                                                                         >
-                                                                                                            대기등록
+                                                                                                            댓글 등록
                                                                                                         </Button>
-                                                                                                        <Button 
-                                                                                                            onClick={() => handleSubmitReply(q, 'closed')}
-                                                                                                            isLoading={submittingReplyId === q.id}
-                                                                                                            disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id] && !replyLogMap[q.id]}
-                                                                                                            className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-emerald-100"
-                                                                                                        >
-                                                                                                            답변완료
-                                                                                                        </Button>
-                                                                                                    </>
-                                                                                                ) : (
-                                                                                                    <Button 
-                                                                                                        onClick={() => handleSubmitReply(q, 'open')}
-                                                                                                        isLoading={submittingReplyId === q.id}
-                                                                                                        disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id] && !replyLogMap[q.id]}
-                                                                                                        className="h-7 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-indigo-100"
-                                                                                                    >
-                                                                                                        댓글 등록
-                                                                                                    </Button>
-                                                                                                )}
+                                                                                                    )}
+                                                                                                </div>
                                                                                             </div>
                                                                                         </div>
-                                                                                    </div>
+                                                                                    ) : (
+                                                                                        <div className="pt-2 text-right">
+                                                                                            <button 
+                                                                                                onClick={() => setActiveReplyBoxQuestionId(q.id)}
+                                                                                                className="text-[10px] font-black text-indigo-650 hover:text-indigo-800 px-3 py-1 bg-indigo-50 hover:bg-indigo-100/80 rounded-lg border border-indigo-100/50 transition-all"
+                                                                                            >
+                                                                                                답변 달기
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    )
                                                                                 ) : (
                                                                                     <p className="text-[9px] text-slate-400 text-center italic pt-3 border-t border-slate-100">
                                                                                         질문 작성자 및 관리자만 대댓글을 달 수 있습니다.
