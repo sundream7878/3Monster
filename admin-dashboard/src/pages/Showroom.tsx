@@ -167,6 +167,77 @@ export const Showroom = () => {
     const [selectedProductIdForDetail, setSelectedProductIdForDetail] = useState<string | null>(null);
     const [questions, setQuestions] = useState<any[]>([]);
     const [loadingQuestions, setLoadingQuestions] = useState(false);
+    const [qnaCounts, setQnaCounts] = useState<{[productId: string]: {questions: number, replies: number}}>({});
+
+    const fetchAllQnaCounts = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('support_tickets')
+                .select('issue_type, reply');
+            
+            if (error) throw error;
+            
+            const counts: {[productId: string]: {questions: number, replies: number}} = {};
+            
+            // Initialize with 0s for all products
+            productCategories.forEach(cat => {
+                cat.products.forEach(p => {
+                    counts[p.id] = { questions: 0, replies: 0 };
+                });
+            });
+            
+            data?.forEach((ticket: any) => {
+                if (ticket.issue_type && ticket.issue_type.startsWith('qna_')) {
+                    const productId = ticket.issue_type.replace('qna_', '');
+                    if (counts[productId] === undefined) {
+                        counts[productId] = { questions: 0, replies: 0 };
+                    }
+                    counts[productId].questions += 1;
+                    
+                    // Count replies
+                    let replyCount = 0;
+                    if (ticket.reply) {
+                        try {
+                            const parsed = JSON.parse(ticket.reply);
+                            if (Array.isArray(parsed)) {
+                                replyCount = parsed.length;
+                            } else if (ticket.reply.trim() !== '') {
+                                replyCount = 1;
+                            }
+                        } catch (e) {
+                            if (ticket.reply.trim() !== '') {
+                                replyCount = 1;
+                            }
+                        }
+                    }
+                    counts[productId].replies += replyCount;
+                }
+            });
+            
+            setQnaCounts(counts);
+        } catch (err) {
+            console.error("Error fetching QnA counts:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchAllQnaCounts();
+        
+        const channel = supabase
+            .channel('qna-counts-sync')
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'support_tickets'
+            }, () => {
+                fetchAllQnaCounts();
+            })
+            .subscribe();
+            
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
     
     // New Question States
     const [newQuestionText, setNewQuestionText] = useState('');
@@ -535,7 +606,7 @@ export const Showroom = () => {
                                                         activeQnaProductId === product.id ? "bg-indigo-50 border-indigo-200 text-indigo-600 font-black" : "hover:bg-slate-50 text-slate-700"
                                                     )}
                                                 >
-                                                    <MessageSquare className="w-3.5 h-3.5" /> 질문/답변
+                                                    <MessageSquare className="w-3.5 h-3.5" /> 질문({qnaCounts[product.id]?.questions || 0}) / 답변({qnaCounts[product.id]?.replies || 0})
                                                 </Button>
                                             </div>
                                         </div>
@@ -551,18 +622,12 @@ export const Showroom = () => {
                                                     onClick={(e) => e.stopPropagation()}
                                                     className="overflow-hidden bg-slate-50/50 border-t border-slate-100 px-6 py-6 space-y-5"
                                                 >
-                                                    <div className="flex items-center justify-between">
-                                                        <h4 className="text-xs font-black text-slate-800 flex items-center gap-2">
-                                                            <MessageSquare className="w-4 h-4 text-indigo-600" /> '{product.title}' 질문/답변 게시판
-                                                        </h4>
-                                                    </div>
-
                                                     {/* 1. New Question Registration Form */}
                                                     {user ? (
                                                         <form onSubmit={(e) => handleSubmitQuestion(product.id, e)} className="space-y-3 bg-white p-4 rounded-xl border border-indigo-50/50 shadow-sm text-left">
                                                             <div className="flex justify-between items-center pb-1">
                                                                 <p className="text-[10px] font-black text-indigo-500 pl-1 uppercase tracking-wider flex items-center gap-1.5">
-                                                                    <span>🙋‍♂️</span> 새 질문 등록
+                                                                    <span>🙋‍♂️</span> 새 질문하기
                                                                 </p>
                                                                 <Button 
                                                                     type="submit" 
@@ -628,11 +693,11 @@ export const Showroom = () => {
                                                                                     {q.status === 'closed' ? (
                                                                                         <span className="text-[9px] font-black bg-emerald-50 text-emerald-500 px-1.5 py-0.5 rounded">답변 완료</span>
                                                                                     ) : (
-                                                                                        <span className="text-[9px] font-black bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded">대기중</span>
+                                                                                        <span className="text-[9px] font-black bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded">답변 미등록</span>
                                                                                     )}
                                                                                 </div>
                                                                                 <p className="text-xs font-black text-slate-800 leading-relaxed truncate">
-                                                                                    {q.description}
+                                                                                    {q.description ? q.description.split('\n')[0] : ''}
                                                                                 </p>
                                                                             </div>
                                                                             <div className="w-6 h-6 rounded-md bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
@@ -645,9 +710,16 @@ export const Showroom = () => {
                                                                             <div className="p-4 bg-slate-50/20 space-y-4">
                                                                                 {/* Question Main Body */}
                                                                                 <div className="space-y-2">
-                                                                                    <p className="text-xs text-slate-600 font-bold leading-relaxed whitespace-pre-wrap">
-                                                                                        {q.description}
-                                                                                    </p>
+                                                                                    {(() => {
+                                                                                        const lines = q.description ? q.description.split('\n') : [];
+                                                                                        const bodyText = lines.slice(1).join('\n').trim();
+                                                                                        if (!bodyText) return null;
+                                                                                        return (
+                                                                                            <p className="text-xs text-slate-600 font-bold leading-relaxed whitespace-pre-wrap">
+                                                                                                {bodyText}
+                                                                                            </p>
+                                                                                        );
+                                                                                    })()}
                                                                                     {(q.image_url || q.log_url) && (
                                                                                         <div className="flex flex-wrap gap-2 pt-1">
                                                                                             {q.image_url && (
@@ -668,10 +740,7 @@ export const Showroom = () => {
 
                                                                                 {/* Thread Timeline Messages */}
                                                                                 <div className="space-y-3 pt-2.5 border-t border-slate-100 flex flex-col">
-                                                                                    {thread.length === 0 ? (
-                                                                                        <p className="text-[10px] font-medium text-slate-400 text-center py-0.5 italic">아직 달린 답변이 없습니다.</p>
-                                                                                    ) : (
-                                                                                        thread.map((msg) => {
+                                                                                    {thread.map((msg) => {
                                                                                             const isMsgAdmin = msg.sender === 'admin';
                                                                                             return (
                                                                                                 <div 
@@ -718,8 +787,7 @@ export const Showroom = () => {
                                                                                                     )}
                                                                                                 </div>
                                                                                             );
-                                                                                        })
-                                                                                    )}
+                                                                                        })}
                                                                                 </div>
 
                                                                                 {/* Reply Form (Visible to Admin or Question Owner) */}
