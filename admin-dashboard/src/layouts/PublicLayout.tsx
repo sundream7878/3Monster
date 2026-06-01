@@ -3,15 +3,18 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, HelpCircle, Menu, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { cn } from '../lib/utils';
 
 export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     const { user, email, role } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+    const [activeSection, setActiveSection] = React.useState<string>('');
 
     const scrollToSection = (id: string) => {
         setMobileMenuOpen(false);
+        setActiveSection(id);
         if (location.pathname !== '/') {
             navigate(`/#${id}`);
             return;
@@ -22,7 +25,18 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
         }
     };
 
+    const isFirstRender = React.useRef(true);
+
     React.useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            if (location.hash) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+            window.scrollTo(0, 0);
+            return;
+        }
+
         if (location.hash && location.pathname === '/') {
             const id = location.hash.replace('#', '');
             const element = document.getElementById(id);
@@ -35,6 +49,50 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
             window.scrollTo(0, 0);
         }
     }, [location]);
+
+    React.useEffect(() => {
+        if (location.pathname !== '/') {
+            setActiveSection('');
+            return;
+        }
+
+        const sections = ['marketing-monster', 'cafe-monster', 'app-monster'];
+
+        const observerOptions = {
+            root: null,
+            rootMargin: '-30% 0px -50% 0px',
+            threshold: 0
+        };
+
+        const observerCallback = (entries: IntersectionObserverEntry[]) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setActiveSection(entry.target.id);
+                }
+            });
+        };
+
+        const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+        sections.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                observer.observe(el);
+            }
+        });
+
+        const handleScroll = () => {
+            if (window.scrollY < 150) {
+                setActiveSection('');
+            }
+        };
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [location.pathname]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-100/80 via-slate-200/90 to-purple-100/70 flex flex-col font-sans">
@@ -59,19 +117,34 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                     <nav className="hidden md:flex items-center gap-12">
                         <button 
                             onClick={() => scrollToSection('marketing-monster')}
-                            className="text-lg font-black text-slate-600 hover:text-indigo-600 transition-all duration-300 relative py-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-indigo-600 hover:after:w-full after:transition-all after:duration-300"
+                            className={cn(
+                                "text-lg font-black transition-all duration-300 relative py-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-indigo-600 after:transition-all after:duration-300",
+                                activeSection === 'marketing-monster' 
+                                    ? "text-indigo-600 after:w-full" 
+                                    : "text-slate-600 hover:text-indigo-600 after:w-0 hover:after:w-full"
+                            )}
                         >
                             마케팅 몬스터
                         </button>
                         <button 
                             onClick={() => scrollToSection('cafe-monster')}
-                            className="text-lg font-black text-slate-600 hover:text-indigo-600 transition-all duration-300 relative py-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-indigo-600 hover:after:w-full after:transition-all after:duration-300"
+                            className={cn(
+                                "text-lg font-black transition-all duration-300 relative py-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-indigo-600 after:transition-all after:duration-300",
+                                activeSection === 'cafe-monster' 
+                                    ? "text-indigo-600 after:w-full" 
+                                    : "text-slate-600 hover:text-indigo-600 after:w-0 hover:after:w-full"
+                            )}
                         >
                             카페 몬스터
                         </button>
                         <button 
                             onClick={() => scrollToSection('app-monster')}
-                            className="text-lg font-black text-slate-600 hover:text-indigo-600 transition-all duration-300 relative py-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-indigo-600 hover:after:w-full after:transition-all after:duration-300"
+                            className={cn(
+                                "text-lg font-black transition-all duration-300 relative py-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-indigo-600 after:transition-all after:duration-300",
+                                activeSection === 'app-monster' 
+                                    ? "text-indigo-600 after:w-full" 
+                                    : "text-slate-600 hover:text-indigo-600 after:w-0 hover:after:w-full"
+                            )}
                         >
                             앱 몬스터
                         </button>
