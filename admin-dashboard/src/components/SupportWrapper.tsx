@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Card } from './ui/Card';
-import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { OtpInput } from './ui/OtpInput';
 import { Mail, ChevronRight, KeyRound, AlertTriangle, CheckCircle2 } from 'lucide-react';
@@ -200,7 +199,7 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
                         >
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">이메일 주소</label>
-                                <Input
+                                <input
                                     id="support-email"
                                     name="email"
                                     type="email"
@@ -209,7 +208,7 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     disabled={otpStep === 2}
-                                    className="h-12 bg-white border-2 border-slate-400 focus:border-indigo-650 focus-visible:border-indigo-650 focus-visible:ring-4 focus-visible:ring-indigo-100 transition-all font-black text-slate-800"
+                                    className="flex h-12 w-full rounded-2xl border-2 border-slate-400 bg-white px-5 py-2 text-sm text-slate-800 transition-all outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 font-black placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-inner"
                                 />
                             </div>
                             
