@@ -209,7 +209,7 @@ export const SupportWrapper: React.FC<SupportWrapperProps> = ({ children }) => {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     disabled={otpStep === 2}
-                                    className="h-12 bg-slate-50 border-none focus-visible:bg-white"
+                                    className="h-12 bg-white border-2 border-slate-400 focus:border-indigo-650 focus-visible:border-indigo-650 focus-visible:ring-4 focus-visible:ring-indigo-100 transition-all font-black text-slate-800"
                                 />
                             </div>
                             
