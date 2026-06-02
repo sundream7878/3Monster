@@ -386,23 +386,41 @@ export const Showroom = () => {
 
     const parseThread = (ticket: any): ThreadMessage[] => {
         if (!ticket.reply) return [];
-        try {
-            const parsed = JSON.parse(ticket.reply);
-            if (Array.isArray(parsed)) {
-                return parsed.filter(msg => msg && typeof msg === 'object').map((msg, index) => ({
-                    id: msg.id || `msg-${index}`,
-                    sender: msg.sender === 'admin' ? 'admin' : 'user',
-                    sender_email: msg.sender_email || 'unknown@3monster.net',
-                    text: msg.text || '',
-                    image_url: msg.image_url || null,
-                    log_url: msg.log_url || null,
-                    created_at: msg.created_at || new Date().toISOString()
-                }));
+        
+        // 1. If it's already an array (parsed by Supabase client for JSON/JSONB column)
+        if (Array.isArray(ticket.reply)) {
+            return ticket.reply.filter((msg: any) => msg && typeof msg === 'object').map((msg: any, index: number) => ({
+                id: msg.id || `msg-${index}`,
+                sender: msg.sender === 'admin' ? 'admin' : 'user',
+                sender_email: msg.sender_email || 'unknown@3monster.net',
+                text: msg.text || '',
+                image_url: msg.image_url || null,
+                log_url: msg.log_url || null,
+                created_at: msg.created_at || new Date().toISOString()
+            }));
+        }
+
+        // 2. If it's a string representation of JSON
+        if (typeof ticket.reply === 'string') {
+            try {
+                const parsed = JSON.parse(ticket.reply);
+                if (Array.isArray(parsed)) {
+                    return parsed.filter((msg: any) => msg && typeof msg === 'object').map((msg: any, index: number) => ({
+                        id: msg.id || `msg-${index}`,
+                        sender: msg.sender === 'admin' ? 'admin' : 'user',
+                        sender_email: msg.sender_email || 'unknown@3monster.net',
+                        text: msg.text || '',
+                        image_url: msg.image_url || null,
+                        log_url: msg.log_url || null,
+                        created_at: msg.created_at || new Date().toISOString()
+                    }));
+                }
+            } catch (e) {
+                // Fail silent
             }
-        } catch (e) {
-            // Fail silent
         }
         
+        // 3. Fallback for legacy string replies
         return [{
             id: 'legacy',
             sender: 'admin',
@@ -848,24 +866,14 @@ export const Showroom = () => {
                                                                                                     
                                                                                                     <div className="flex gap-2">
                                                                                                         {isAdmin ? (
-                                                                                                            <>
-                                                                                                                <Button 
-                                                                                                                    onClick={() => handleSubmitReply(q, 'open')}
-                                                                                                                    isLoading={submittingReplyId === q.id}
-                                                                                                                    disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id]}
-                                                                                                                    className="h-7 px-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[9px] font-black transition-all cursor-pointer"
-                                                                                                                >
-                                                                                                                    등록
-                                                                                                                </Button>
-                                                                                                                <Button 
-                                                                                                                    onClick={() => handleSubmitReply(q, 'closed')}
-                                                                                                                    isLoading={submittingReplyId === q.id}
-                                                                                                                    disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id]}
-                                                                                                                    className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-emerald-100 cursor-pointer"
-                                                                                                                >
-                                                                                                                    답변완료
-                                                                                                                </Button>
-                                                                                                            </>
+                                                                                                            <Button 
+                                                                                                                onClick={() => handleSubmitReply(q, 'closed')}
+                                                                                                                isLoading={submittingReplyId === q.id}
+                                                                                                                disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id]}
+                                                                                                                className="h-7 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-emerald-100 cursor-pointer"
+                                                                                                            >
+                                                                                                                답변 등록
+                                                                                                            </Button>
                                                                                                         ) : (
                                                                                                             <Button 
                                                                                                                 onClick={() => handleSubmitReply(q, 'open')}
