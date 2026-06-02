@@ -46,7 +46,12 @@ const productCategories = [
                 icon: MapPin,
                 color: "from-blue-600 to-indigo-700",
                 badge: "26년 6월 출시",
-                features: ["실시간 N플레이스 정보 추출", "무료 인스타DM발송 & 무료 E-메일링 연동", "원클릭 Excel 내보내기"]
+                features: [
+                    "실시간 N플레이스 정보 추출",
+                    "무료 인스타그램 DM발송",
+                    "무료 이메일 발송 (네이버/구글 개인계정 연동)",
+                    "원클릭 Excel 내보내기"
+                ]
             },
             {
                 id: 'content-crawler',
