@@ -807,7 +807,7 @@ export const Showroom = () => {
 
                                                                         {/* Question Detail & Reply Thread */}
                                                                         {isQExpanded && (
-                                                                            <div className="p-4 bg-slate-50/20 space-y-4">
+                                                                            <div className="p-3 bg-slate-50/15 space-y-3">
                                                                                 {/* Question Main Body */}
                                                                                 {(() => {
                                                                                     const lines = q.description ? q.description.split('\n') : [];
@@ -843,7 +843,15 @@ export const Showroom = () => {
 
                                                                                 {/* Thread Timeline Messages */}
                                                                                 {thread.length > 0 && (
-                                                                                    <div className="space-y-3 pt-2.5 border-t border-slate-100 flex flex-col">
+                                                                                    <div className={cn(
+                                                                                        "space-y-2 flex flex-col",
+                                                                                        (() => {
+                                                                                            const lines = q.description ? q.description.split('\n') : [];
+                                                                                            const bodyText = lines.slice(1).join('\n').trim();
+                                                                                            const hasFiles = !!(q.image_url || q.log_url);
+                                                                                            return (bodyText || hasFiles);
+                                                                                        })() && "pt-2 border-t border-slate-100"
+                                                                                    )}>
                                                                                             {thread.map((msg) => {
                                                                                                     const isMsgAdmin = msg.sender === 'admin';
                                                                                                     const currentUserEmail = verifiedEmail || user?.email;
@@ -852,7 +860,7 @@ export const Showroom = () => {
                                                                                                         <div 
                                                                                                             key={msg.id} 
                                                                                                             className={cn(
-                                                                                                                "flex flex-col max-w-[85%] p-3 rounded-lg shadow-xs border transition-all duration-300",
+                                                                                                                "flex flex-col max-w-[85%] p-2 px-3 rounded-lg shadow-xs border transition-all duration-300",
                                                                                                                 isMsgAdmin 
                                                                                                                     ? "bg-emerald-50/50 border-emerald-100/50 ml-auto rounded-tr-none" 
                                                                                                                     : "bg-indigo-50/40 border-indigo-100/30 mr-auto rounded-tl-none"

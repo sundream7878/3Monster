@@ -993,7 +993,7 @@ export const CustomerSupport = () => {
                                             </div>
                                             
                                             {isExpanded && canViewDetail && (
-                                                <div className="border-t border-slate-100 bg-slate-50/20 p-3.5 space-y-3.5 animate-in fade-in duration-200">
+                                                <div className="border-t border-slate-100 bg-slate-50/15 p-2.5 space-y-2.5 animate-in fade-in duration-200">
                                                     {/* Thread History */}
                                                     {parseThread(ticket).length > 0 && (
                                                         <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 flex flex-col">
@@ -1005,7 +1005,7 @@ export const CustomerSupport = () => {
                                                                                                     <div 
                                                                                                         key={msg.id} 
                                                                                                         className={cn(
-                                                                                                            "flex flex-col max-w-[85%] p-3 rounded-lg border transition-all duration-200 text-left",
+                                                                                                            "flex flex-col max-w-[85%] p-2 px-3 rounded-lg border transition-all duration-200 text-left",
                                                                                                             isMsgAdmin 
                                                                                                                 ? "bg-emerald-50/40 border-emerald-100/50 ml-auto rounded-tr-none" 
                                                                                                                 : "bg-slate-100/60 border-slate-200/50 mr-auto rounded-tl-none"
