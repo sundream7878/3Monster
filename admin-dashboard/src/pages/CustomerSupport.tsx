@@ -476,6 +476,34 @@ export const CustomerSupport = () => {
         }
     };
 
+    const handleDeleteTicket = async (ticketId: string) => {
+        if (!confirm("정말 이 문의를 삭제하시겠습니까?")) return;
+        
+        try {
+            const { error } = await supabase
+                .from('support_tickets')
+                .delete()
+                .eq('id', ticketId);
+                
+            if (error) throw error;
+            
+            alert("문의가 삭제되었습니다.");
+            
+            setSelectedTicketForDetail(null);
+            setExpandedTicketId(null);
+            setIssueType('bug');
+            setDescription('');
+            setKmongNickname('');
+            setSelectedLicenseId('');
+            setIsEditing(false);
+            
+            await fetchTickets();
+        } catch (err: any) {
+            console.error("Error deleting ticket:", err);
+            alert(`문의 삭제 중 오류가 발생했습니다: ${err.message}`);
+        }
+    };
+
     const maskEmail = (email: string) => {
         if (!email) return 'unknown';
         const [userPart, domain] = email.split('@');
@@ -844,13 +872,24 @@ export const CustomerSupport = () => {
                                                     </Button>
                                                 </>
                                             ) : (
-                                                <Button 
-                                                    type="button"
-                                                    onClick={() => setIsEditing(true)}
-                                                    className="flex-1 h-9 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold shadow-sm transition-all duration-200"
-                                                >
-                                                    ✏️ 문의 수정하기
-                                                </Button>
+                                                <div className="flex gap-2 w-full flex-1">
+                                                    <Button 
+                                                        type="button"
+                                                        onClick={() => setIsEditing(true)}
+                                                        className="flex-1 h-9 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold shadow-sm transition-all duration-200"
+                                                    >
+                                                        ✏️ 문의 수정하기
+                                                    </Button>
+                                                    {selectedTicketForDetail && (!selectedTicketForDetail.reply || parseThread(selectedTicketForDetail).length === 0) && (
+                                                        <Button 
+                                                            type="button"
+                                                            onClick={() => handleDeleteTicket(selectedTicketForDetail.id)}
+                                                            className="flex-1 h-9 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold shadow-sm transition-all duration-200"
+                                                        >
+                                                            🗑️ 문의 삭제하기
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     )}

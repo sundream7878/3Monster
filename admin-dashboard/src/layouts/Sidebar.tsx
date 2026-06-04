@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { LayoutDashboard, Key, Users, LogOut, HelpCircle, Bell } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -24,9 +24,9 @@ export const Sidebar = () => {
         <aside className="fixed inset-y-0 left-0 z-40 w-72 transform bg-white transition-transform duration-300 lg:translate-x-0 border-r border-slate-100">
             {/* Logo Area */}
             <div className="flex h-24 items-center px-8">
-                <div className="flex items-center gap-3">
+                <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <img src="/logo.png" alt="Logo" className="h-10 w-auto object-contain" />
-                </div>
+                </Link>
             </div>
 
             <div className="flex flex-col h-[calc(100%-6rem)] py-8 px-6">
