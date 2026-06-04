@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { 
@@ -167,6 +167,7 @@ const productCategories = [
 
 export const Showroom = () => {
     const { user, email: verifiedEmail, role } = useAuth();
+    const location = useLocation();
     const isAdmin = role === 'admin';
 
     // Q&A state management
@@ -251,6 +252,32 @@ export const Showroom = () => {
             supabase.removeChannel(channel);
         };
     }, []);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const qnaProduct = params.get('qna_product');
+        const ticketId = params.get('ticket_id');
+
+        if (qnaProduct) {
+            setActiveQnaProductId(qnaProduct);
+            if (ticketId) {
+                setExpandedQuestionId(ticketId);
+                setTimeout(() => {
+                    const element = document.getElementById(`ticket-${ticketId}`);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    const element = document.getElementById(qnaProduct);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 300);
+            }
+        }
+    }, [location.search]);
     
     // New Question States
     const [newQuestionText, setNewQuestionText] = useState('');
@@ -720,11 +747,11 @@ export const Showroom = () => {
                                                     exit={{ opacity: 0, height: 0 }}
                                                     transition={{ duration: 0.3, ease: "easeInOut" }}
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="overflow-hidden bg-slate-50/50 border-t border-slate-100 px-6 py-6 space-y-5"
+                                                    className="overflow-hidden bg-slate-50/50 border-t border-slate-100 px-2 py-2.5 space-y-2.5"
                                                 >
                                                     {/* 1. New Question Registration Form */}
                                                     {user ? (
-                                                        <form onSubmit={(e) => handleSubmitQuestion(product.id, e)} className="space-y-3 bg-white p-4 rounded-xl border border-indigo-200 shadow-sm text-left">
+                                                        <form onSubmit={(e) => handleSubmitQuestion(product.id, e)} className="space-y-1.5 bg-white p-2 rounded-xl border border-indigo-200 shadow-sm text-left">
                                                             <div className="flex justify-between items-center pb-1">
                                                                 <p className="text-[10px] font-black text-indigo-500 pl-1 uppercase tracking-wider flex items-center gap-1.5">
                                                                     <span>🙋‍♂️</span> 새 질문하기
@@ -742,12 +769,12 @@ export const Showroom = () => {
                                                                     placeholder="제품에 대해 궁금한 점을 적어주세요. 개발진이 직접 답변해 드립니다."
                                                                     value={newQuestionText}
                                                                     onChange={(e) => setNewQuestionText(e.target.value)}
-                                                                    className="w-full min-h-[75px] rounded-xl bg-slate-50 p-3 text-xs font-bold border border-slate-350 focus:border-indigo-500 outline-none focus:ring-2 focus:ring-indigo-100/50 transition-all resize-none placeholder:text-slate-500 text-slate-900"
+                                                                    className="w-full min-h-[50px] rounded-xl bg-slate-50 p-2 text-xs font-bold border border-slate-350 focus:border-indigo-500 outline-none focus:ring-2 focus:ring-indigo-100/50 transition-all resize-none placeholder:text-slate-500 text-slate-900"
                                                                 />
                                                             </div>
                                                         </form>
                                                     ) : (
-                                                        <div className="bg-indigo-50/40 p-4 rounded-xl border border-indigo-50 flex flex-col items-center justify-between gap-3 text-left">
+                                                        <div className="bg-indigo-50/40 p-2 rounded-xl border border-indigo-50 flex flex-col items-center justify-between gap-2 text-left">
                                                             <p className="text-xs text-indigo-900 font-bold">🙋‍♂️ 질문 확인 및 등록을 위해 로그인해 주세요.</p>
                                                             <Link to="/support" className="w-full">
                                                                 <Button size="sm" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl h-9 px-4 shadow-lg shadow-indigo-100">
@@ -773,7 +800,7 @@ export const Showroom = () => {
                                                                 const canReply = isQOwner || isAdmin;
 
                                                                 return (
-                                                                    <div key={q.id} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
+                                                                    <div key={q.id} id={`ticket-${q.id}`} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
                                                                         {/* Question Header (Click to expand) */}
                                                                         <div 
                                                                             onClick={() => setExpandedQuestionId(isQExpanded ? null : q.id)}

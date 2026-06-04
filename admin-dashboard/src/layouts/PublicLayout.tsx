@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, HelpCircle, Menu, X } from 'lucide-react';
+import { LayoutDashboard, HelpCircle, Menu, X, Bell } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
 
@@ -11,6 +12,68 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
     const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
     const [activeSection, setActiveSection] = React.useState<string>('');
+    const [notifications, setNotifications] = React.useState<any[]>([]);
+    const [bellDropdownOpen, setBellDropdownOpen] = React.useState(false);
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    const fetchQnaNotifications = React.useCallback(async () => {
+        if (!user && !email) {
+            setNotifications([]);
+            return;
+        }
+
+        let query = supabase
+            .from('support_tickets')
+            .select('id, email, uid, issue_type, description, status, created_at')
+            .like('issue_type', 'qna_%');
+
+        if (role !== 'admin') {
+            const userEmail = email || localStorage.getItem('user_email');
+            if (userEmail) {
+                const uidFilter = user?.id ? `uid.eq.${user.id},` : '';
+                query = query.or(`${uidFilter}email.eq.${userEmail.toLowerCase()}`);
+            } else if (user?.id) {
+                query = query.eq('uid', user.id);
+            } else {
+                setNotifications([]);
+                return;
+            }
+        } else {
+            query = query.eq('status', 'open');
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false }).limit(20);
+        if (!error && data) {
+            setNotifications(data);
+        }
+    }, [user, email, role]);
+
+    React.useEffect(() => {
+        fetchQnaNotifications();
+
+        const channel = supabase
+            .channel('qna-notifications-sync')
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'support_tickets'
+            }, () => {
+                fetchQnaNotifications();
+            })
+            .subscribe();
+
+        const handleOutsideClick = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setBellDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutsideClick);
+
+        return () => {
+            supabase.removeChannel(channel);
+            document.removeEventListener('mousedown', handleOutsideClick);
+        };
+    }, [fetchQnaNotifications]);
 
     const scrollToSection = (id: string) => {
         setMobileMenuOpen(false);
@@ -145,6 +208,73 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
 
                     {/* Right Side Controls */}
                     <div className="hidden md:flex items-center gap-6">
+                        {/* Q&A Notifications Bell */}
+                        {(user || localStorage.getItem('user_email')) && (
+                            <div className="relative" ref={dropdownRef}>
+                                <button 
+                                    onClick={() => setBellDropdownOpen(!bellDropdownOpen)}
+                                    className="p-3.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-650 hover:text-indigo-600 transition-all flex items-center justify-center relative shadow-sm hover:shadow"
+                                    title="질문 알림"
+                                >
+                                    <Bell className="w-5 h-5" />
+                                    {notifications.length > 0 && (
+                                        <span className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white animate-pulse">
+                                            {notifications.length}
+                                        </span>
+                                    )}
+                                </button>
+                                
+                                {bellDropdownOpen && (
+                                    <div className="absolute right-0 mt-3 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 p-2 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+                                            <span className="text-xs font-black text-slate-800">
+                                                {role === 'admin' ? '🛡️ 미답변 질문 목록' : '🙋‍♂️ 내 질문 목록'}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 font-bold">
+                                                최근 {notifications.length}개
+                                            </span>
+                                        </div>
+                                        
+                                        {notifications.length === 0 ? (
+                                            <div className="p-6 text-center text-xs font-bold text-slate-400">
+                                                알림이 없습니다.
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto">
+                                                {notifications.map((notif) => {
+                                                    const prodId = notif.issue_type.replace('qna_', '');
+                                                    const title = notif.description ? notif.description.split('\n')[0] : '내용 없음';
+                                                    
+                                                    return (
+                                                        <button
+                                                            key={notif.id}
+                                                            onClick={() => {
+                                                                setBellDropdownOpen(false);
+                                                                navigate(`/?qna_product=${prodId}&ticket_id=${notif.id}`);
+                                                            }}
+                                                            className="w-full text-left p-2 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100 flex flex-col gap-1 cursor-pointer"
+                                                        >
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">
+                                                                    {prodId}
+                                                                </span>
+                                                                <span className="text-[9px] text-slate-400 font-bold">
+                                                                    {new Date(notif.created_at).toLocaleDateString()}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs font-bold text-slate-700 truncate w-full">
+                                                                {title}
+                                                            </p>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <Link to="/support">
                             <Button 
                                 variant={location.pathname === '/support' ? 'default' : 'outline'}

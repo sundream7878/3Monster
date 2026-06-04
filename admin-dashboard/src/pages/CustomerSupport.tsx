@@ -993,7 +993,7 @@ export const CustomerSupport = () => {
                                             </div>
                                             
                                             {isExpanded && canViewDetail && (
-                                                <div className="border-t border-slate-100 bg-slate-50/15 p-2 pt-1 pb-1.5 space-y-1.5 animate-in fade-in duration-200">
+                                                <div className="border-t border-slate-100 bg-slate-50/15 p-1 px-1.5 pt-1 pb-1.5 space-y-1.5 animate-in fade-in duration-200">
                                                     {/* Thread History */}
                                                     {parseThread(ticket).length > 0 && (
                                                         <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1 flex flex-col">
