@@ -13,7 +13,8 @@ import {
     ChevronDown, 
     ChevronUp, 
     Plus,
-    Search
+    Search,
+    Shield
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
@@ -569,10 +570,11 @@ export const CustomerSupport = () => {
         <div className="w-full bg-transparent py-12 px-4 min-h-screen">
             <div className="max-w-7xl mx-auto space-y-5 pb-10">
 
-            {/* Main Content Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* Main Content Layout - 관리자는 목록만 전체 너비, 일반 유저는 2열 */}
+            <div className={`grid grid-cols-1 gap-6 items-start ${!isAdmin ? 'lg:grid-cols-2' : ''}`}>
                 
-                {/* Left side: Inquiry Form */}
+                {/* Left side: 일반 유저만 표시 (관리자는 문의 폼 불필요) */}
+                {!isAdmin && (
                 <div className="space-y-4">
                     <Card className="p-5 bg-white border border-slate-200 shadow-sm rounded-xl transition-all duration-300">
                         <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-150">
@@ -896,10 +898,41 @@ export const CustomerSupport = () => {
                                 </form>
                             </div>
                         </Card>
-                    </div>
+                </div>
+                )}
 
                 {/* Right side: Ticket List */}
                 <div className="space-y-4">
+
+                    {/* 관리자 전용 요약 배너 */}
+                    {isAdmin && (
+                        <Card className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 shadow-sm rounded-xl">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+                                        <Shield className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-indigo-800">관리자 모드</p>
+                                        <p className="text-[10px] text-indigo-500 font-medium">전체 고객 문의를 관리하고 있습니다.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 text-right">
+                                    <div>
+                                        <p className="text-lg font-black text-indigo-700">{tickets.filter(t => !t.issue_type?.startsWith('qna_')).length}</p>
+                                        <p className="text-[9px] font-semibold text-indigo-400 uppercase tracking-wide">전체</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-black text-rose-600">
+                                            {tickets.filter(t => !t.issue_type?.startsWith('qna_') && t.status !== 'closed').length}
+                                        </p>
+                                        <p className="text-[9px] font-semibold text-rose-400 uppercase tracking-wide">미처리</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+
                     {/* List View Main */}
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1 group">
