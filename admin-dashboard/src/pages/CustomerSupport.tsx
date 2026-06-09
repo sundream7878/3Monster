@@ -669,7 +669,7 @@ export const CustomerSupport = () => {
                                             <span className={cn(
                                                 "px-2 py-0.5 rounded text-xs font-bold border",
                                                 selectedTicketForDetail.status === 'open' 
-                                                    ? "bg-amber-50 text-amber-700 border-amber-200" 
+                                                    ? "bg-rose-50 text-rose-700 border-rose-200" 
                                                     : "bg-emerald-50 text-emerald-700 border-emerald-200"
                                             )}>
                                                 {selectedTicketForDetail.status === 'open' ? '처리 대기중' : '진행 완료'}
@@ -1276,7 +1276,7 @@ export const CustomerSupport = () => {
                                             {/* Left Status Bar Indicator */}
                                             <div className={cn(
                                                 "absolute left-0 top-0 bottom-0 w-0.5",
-                                                ticket.status === 'open' ? "bg-indigo-500" : "bg-emerald-500"
+                                                ticket.status === 'open' ? "bg-rose-500" : "bg-emerald-500"
                                             )} />
                                             <div 
                                                 className={cn(
@@ -1333,7 +1333,7 @@ export const CustomerSupport = () => {
                                                  <div className="flex items-center gap-2">
                                                      <span className={cn(
                                                          "w-1.5 h-1.5 rounded-full",
-                                                         ticket.status === 'open' ? "bg-indigo-500" : "bg-emerald-500"
+                                                         ticket.status === 'open' ? "bg-rose-500" : "bg-emerald-500"
                                                      )} title={ticket.status === 'open' ? '처리 대기중' : '진행 완료'} />
                                                      
                                                      <span className="text-slate-800 font-bold text-xs flex items-center gap-1.5">

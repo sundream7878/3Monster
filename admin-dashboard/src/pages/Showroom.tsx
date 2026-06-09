@@ -839,7 +839,7 @@ export const Showroom = () => {
                                                                                     {q.status === 'closed' ? (
                                                                                         <span className="text-[9px] font-black bg-emerald-50 text-emerald-500 px-1.5 py-0.5 rounded">답변 완료</span>
                                                                                     ) : (
-                                                                                        <span className="text-[9px] font-black bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded">답변 미등록</span>
+                                                                                        <span className="text-[9px] font-black bg-rose-50 text-rose-500 px-1.5 py-0.5 rounded">답변 미등록</span>
                                                                                     )}
                                                                                 </div>
                                                                                 <p className="text-xs font-black text-slate-800 leading-relaxed truncate">
