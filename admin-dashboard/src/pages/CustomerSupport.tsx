@@ -875,34 +875,41 @@ export const CustomerSupport = () => {
                                                                         {new Date(msg.created_at).toLocaleString()}
                                                                     </span>
                                                                     {isMsgOwner && (
-                                                                        <div className="flex items-center gap-1.5 ml-1">
-                                                                            <button 
-                                                                                onClick={() => {
-                                                                                    setEditingReplyId(msg.id);
-                                                                                    setEditingReplyText(msg.text);
-                                                                                }}
-                                                                                className="text-[9px] font-bold text-indigo-500 hover:text-indigo-700 transition-colors cursor-pointer"
-                                                                            >
-                                                                                수정
-                                                                            </button>
-                                                                            <span className="text-[8px] text-slate-350 select-none">|</span>
-                                                                            <button 
-                                                                                onClick={() => handleDeleteReply(selectedTicketForDetail, msg.id)}
-                                                                                className="text-[9px] font-bold text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
-                                                                            >
-                                                                                삭제
-                                                                            </button>
-                                                                        </div>
+                                                                        editingReplyId === msg.id ? (
+                                                                            <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded border border-indigo-100 ml-1 select-none">
+                                                                                수정 중
+                                                                            </span>
+                                                                        ) : (
+                                                                            <div className="flex items-center gap-1.5 ml-1">
+                                                                                <button 
+                                                                                    onClick={() => {
+                                                                                        setEditingReplyId(msg.id);
+                                                                                        setEditingReplyText(msg.text);
+                                                                                    }}
+                                                                                    className="text-[9px] font-bold text-indigo-500 hover:text-indigo-700 transition-colors cursor-pointer outline-none focus:outline-none"
+                                                                                >
+                                                                                    수정
+                                                                                </button>
+                                                                                <span className="text-[8px] text-slate-350 select-none">|</span>
+                                                                                <button 
+                                                                                    onClick={() => handleDeleteReply(selectedTicketForDetail, msg.id)}
+                                                                                    className="text-[9px] font-bold text-rose-500 hover:text-rose-700 transition-colors cursor-pointer outline-none focus:outline-none"
+                                                                                >
+                                                                                    삭제
+                                                                                </button>
+                                                                            </div>
+                                                                        )
                                                                     )}
                                                                 </div>
                                                             </div>
                                             
                                                             {editingReplyId === msg.id ? (
-                                                                 <div className="mt-1 space-y-1.5">
+                                                                 <div className="mt-2 space-y-2 w-full min-w-[280px]">
                                                                      <textarea
                                                                          value={editingReplyText}
                                                                          onChange={e => setEditingReplyText(e.target.value)}
-                                                                         className="w-full min-h-[50px] p-1.5 text-xs rounded border border-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-slate-800 resize-none font-medium"
+                                                                         className="w-full min-h-[100px] p-2.5 text-xs rounded-xl border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-150 focus:border-indigo-500 bg-white text-slate-800 resize-y font-medium shadow-inner transition-all leading-relaxed"
+                                                                         placeholder="답변 내용을 수정하세요..."
                                                                      />
                                                                      <div className="flex justify-end gap-1.5">
                                                                          <button
@@ -910,13 +917,13 @@ export const CustomerSupport = () => {
                                                                                  setEditingReplyId(null);
                                                                                  setEditingReplyText('');
                                                                              }}
-                                                                             className="px-2 py-0.5 text-[10px] font-semibold text-slate-500 hover:bg-slate-100 rounded border border-slate-200 transition-colors cursor-pointer"
+                                                                             className="h-7 px-3 bg-slate-100 hover:bg-slate-200 text-slate-655 rounded-lg text-[10px] font-bold border border-slate-200 transition-all cursor-pointer"
                                                                          >
                                                                              취소
                                                                          </button>
                                                                          <button
                                                                              onClick={() => handleEditReply(selectedTicketForDetail, msg.id, editingReplyText)}
-                                                                             className="px-2 py-0.5 text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors cursor-pointer"
+                                                                             className="h-7 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold shadow-sm transition-all cursor-pointer"
                                                                          >
                                                                              저장
                                                                          </button>
