@@ -191,6 +191,16 @@ export const CustomerSupport = () => {
         };
     }, [user, verifiedEmail, role]);
 
+    // Keep the selected ticket detail view in sync when tickets list updates (e.g. on new reply)
+    React.useEffect(() => {
+        if (selectedTicketForDetail) {
+            const updated = tickets.find(t => t.id === selectedTicketForDetail.id);
+            if (updated) {
+                setSelectedTicketForDetail(updated);
+            }
+        }
+    }, [tickets]);
+
     const handleUploadFile = async (file: File, folder: string): Promise<string> => {
         const userId = user?.id || 'guest';
         const fileExt = file.name.split('.').pop();
