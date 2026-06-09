@@ -34,6 +34,12 @@ interface ThreadMessage {
 export const CustomerSupport = () => {
     const { user, email: verifiedEmail, role, refreshRole } = useAuth();
     const loggedInEmail = verifiedEmail || localStorage.getItem('user_email') || user?.email || '';
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
@@ -262,7 +268,7 @@ export const CustomerSupport = () => {
             setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
             
             setIsEditing(false);
-            alert("문의가 수정되었습니다.");
+            showToast("문의가 수정되었습니다.");
         } catch (err: any) {
             console.error("Error saving edit:", err);
             setError(`수정 중 오류가 발생했습니다: ${err.message}`);
@@ -303,7 +309,7 @@ export const CustomerSupport = () => {
                 finalDescription = `[수동 구매 인증 요청: 크몽 ID - ${kmongNickname.trim()}]\n${finalDescription}`;
             }
 
-            const { error: insertError } = await supabase
+            const { data, error: insertError } = await supabase
                 .from('support_tickets')
                 .insert([{
                     uid: user?.id || null,
@@ -313,7 +319,8 @@ export const CustomerSupport = () => {
                     image_url: imageUrl,
                     log_url: logUrl,
                     status: 'open'
-                }]);
+                }])
+                .select();
 
             if (insertError) throw insertError;
 
@@ -359,9 +366,15 @@ export const CustomerSupport = () => {
             }
 
             setSuccess(true);
+            showToast("문의가 정상적으로 등록되었습니다.");
 
             if (refreshRole) {
                 await refreshRole();
+            }
+
+            if (data && data[0]) {
+                setSelectedTicketForDetail(data[0]);
+                setIsEditing(false);
             }
 
             setTimeout(() => {
@@ -420,7 +433,7 @@ export const CustomerSupport = () => {
 
     const handleSubmitReply = async (ticket: any, nextStatus: 'open' | 'closed') => {
         if (!replyText.trim() && !replyImage && !replyLog) {
-            alert("내용을 입력하거나 파일을 첨부해주세요.");
+            showToast("내용을 입력하거나 파일을 첨부해주세요.", "error");
             return;
         }
 
@@ -464,12 +477,14 @@ export const CustomerSupport = () => {
             setReplyText('');
             setReplyImage(null);
             setReplyLog(null);
+            if (data && data[0]) {
+                setSelectedTicketForDetail(data[0]);
+            }
             await fetchTickets();
-            
-            alert("댓글이 등록되었습니다.");
+            showToast("댓글이 등록되었습니다.");
         } catch (err: any) {
             console.error("Error submitting reply:", err);
-            alert(`댓글 등록 중 오류가 발생했습니다: ${err.message}`);
+            showToast(`댓글 등록 중 오류가 발생했습니다: ${err.message}`, "error");
         } finally {
             setIsSubmittingReply(false);
         }
@@ -498,10 +513,10 @@ export const CustomerSupport = () => {
             
             await fetchTickets();
             
-            alert("댓글이 삭제되었습니다.");
+            showToast("댓글이 삭제되었습니다.");
         } catch (err: any) {
             console.error("Error deleting reply:", err);
-            alert(`댓글 삭제 중 오류가 발생했습니다: ${err.message}`);
+            showToast(`댓글 삭제 중 오류가 발생했습니다: ${err.message}`, "error");
         }
     };
 
@@ -520,7 +535,7 @@ export const CustomerSupport = () => {
                 throw new Error("삭제 권한이 없거나 이미 삭제된 문의입니다. (RLS 제한)");
             }
             
-            alert("문의가 삭제되었습니다.");
+            showToast("문의가 삭제되었습니다.");
             
             setSelectedTicketForDetail(null);
             setExpandedTicketId(null);
@@ -533,7 +548,7 @@ export const CustomerSupport = () => {
             await fetchTickets();
         } catch (err: any) {
             console.error("Error deleting ticket:", err);
-            alert(`문의 삭제 중 오류가 발생했습니다: ${err.message}`);
+            showToast(`문의 삭제 중 오류가 발생했습니다: ${err.message}`, "error");
         }
     };
 
@@ -608,7 +623,7 @@ export const CustomerSupport = () => {
                 {/* Left side: 일반 유저는 항상 노출, 관리자는 문의 선택 시 노출 */}
                 {(!isAdmin || selectedTicketForDetail) && (
                 <div className="space-y-4">
-                    <Card className="p-5 bg-white border border-slate-200 shadow-sm rounded-xl transition-all duration-300">
+                    <Card className="p-6 bg-white border-2 border-slate-300 shadow-md rounded-2xl transition-all duration-300">
                         <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-150">
                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                                 {selectedTicketForDetail ? (
@@ -643,7 +658,7 @@ export const CustomerSupport = () => {
                                 <div className="relative min-w-[130px]">
                                     <select
                                         disabled={!!selectedTicketForDetail && !isEditing}
-                                        className="w-full h-8 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 focus:bg-white pl-2.5 pr-8 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
+                                        className="w-full h-8 rounded-lg bg-slate-100/70 border border-slate-300 hover:border-slate-400 focus:bg-white pl-2.5 pr-8 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-150 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed shadow-sm"
                                         value={issueType}
                                         onChange={e => setIssueType(e.target.value)}
                                     >
@@ -730,7 +745,7 @@ export const CustomerSupport = () => {
                                                 </button>
                                             )}
                                         </div>
-                                        <div className="w-full bg-slate-50 rounded-lg border border-slate-200 p-3.5 text-xs font-medium text-slate-700 whitespace-pre-wrap leading-relaxed min-h-[150px]">
+                                        <div className="w-full bg-slate-100/70 rounded-xl border border-slate-300 p-4 text-xs font-semibold text-slate-800 whitespace-pre-wrap leading-relaxed min-h-[150px] shadow-inner">
                                             {selectedTicketForDetail.description}
                                         </div>
                                     </div>
@@ -883,7 +898,7 @@ export const CustomerSupport = () => {
                                                                     onChange={e => setReplyImage(e.target.files?.[0] || null)}
                                                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                                 />
-                                                                <div className="h-8 px-3 rounded-lg bg-slate-50 hover:bg-indigo-50/10 border border-slate-200 hover:border-indigo-300 flex items-center transition-all cursor-pointer">
+                                                                <div className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-indigo-50/20 border border-slate-300 hover:border-indigo-300 flex items-center transition-all cursor-pointer shadow-sm">
                                                                     <ImageIcon className="w-3.5 h-3.5 text-slate-400 mr-1.5 group-hover:text-indigo-500 transition-colors" />
                                                                     <span className="text-[10px] font-medium text-slate-500 group-hover:text-indigo-700 transition-colors truncate max-w-[120px]">
                                                                         {replyImage ? replyImage.name : '사진 첨부'}
@@ -906,7 +921,7 @@ export const CustomerSupport = () => {
                                                                     onChange={e => setReplyLog(e.target.files?.[0] || null)}
                                                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                                 />
-                                                                <div className="h-8 px-3 rounded-lg bg-slate-50 hover:bg-indigo-50/10 border border-slate-200 hover:border-indigo-300 flex items-center transition-all cursor-pointer">
+                                                                <div className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-indigo-50/20 border border-slate-300 hover:border-indigo-300 flex items-center transition-all cursor-pointer shadow-sm">
                                                                     <FileText className="w-3.5 h-3.5 text-slate-400 mr-1.5 group-hover:text-indigo-500 transition-colors" />
                                                                     <span className="text-[10px] font-semibold text-slate-500 group-hover:text-indigo-700 transition-colors truncate max-w-[120px]">
                                                                         {replyLog ? replyLog.name : '로그 첨부'}
@@ -1028,7 +1043,7 @@ export const CustomerSupport = () => {
                                                     <select
                                                         disabled={!!selectedTicketForDetail && !isEditing}
                                                         required
-                                                        className="w-full h-9 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 focus:bg-white px-3 pr-8 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all appearance-none cursor-pointer shadow-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                                                        className="w-full h-9 rounded-lg bg-slate-100/70 border border-slate-300 hover:border-slate-400 focus:bg-white px-3 pr-8 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-150 focus:border-indigo-500 transition-all appearance-none cursor-pointer shadow-sm disabled:opacity-75 disabled:cursor-not-allowed"
                                                         value={selectedProduct}
                                                         onChange={e => setSelectedProduct(e.target.value)}
                                                     >
@@ -1359,7 +1374,18 @@ export const CustomerSupport = () => {
                                 );
                             })
                         )}
-                    </div>
+                    
+            {toast && (
+                <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 border border-slate-800 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-300">
+                    {toast.type === 'success' ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                        <AlertCircle className="w-4 h-4 text-rose-500" />
+                    )}
+                    {toast.message}
+                </div>
+            )}
+</div>
                 </div>
             </div>
         </div>
