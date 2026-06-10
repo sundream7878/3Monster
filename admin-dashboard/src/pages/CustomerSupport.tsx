@@ -780,6 +780,12 @@ export const CustomerSupport = () => {
                                     {/* Category & Status Headers */}
                                     <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                                         <div className="flex items-center gap-2">
+                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">제품</span>
+                                            <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold border border-indigo-100/40 uppercase">
+                                                {parseTicketInfo(selectedTicketForDetail).product}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
                                             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">구분</span>
                                             <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold border border-indigo-100">
                                                 {selectedTicketForDetail.issue_type === 'bug' ? '버그/오류 신고' :
