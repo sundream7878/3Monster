@@ -857,11 +857,12 @@ export const CustomerSupport = () => {
                                                         <div 
                                                             key={msg.id} 
                                                             className={cn(
-                                                                "flex flex-col max-w-[85%] py-1.5 px-2.5 rounded-lg border transition-all duration-200 text-left",
-                                                                isMsgAdmin 
-                                                                    ? "bg-emerald-50/40 border-emerald-100/50 ml-auto rounded-tr-none" 
-                                                                    : "bg-slate-100/60 border-slate-200/50 mr-auto rounded-tl-none"
-                                                            )}
+                                                                 "flex flex-col max-w-[85%] py-1.5 px-2.5 rounded-lg border transition-all duration-200 text-left",
+                                                                 isMsgAdmin 
+                                                                     ? "bg-emerald-50/40 border-emerald-100/50 ml-auto rounded-tr-none" 
+                                                                     : "bg-slate-100/60 border-slate-200/50 mr-auto rounded-tl-none",
+                                                                 editingReplyId === msg.id && "w-full"
+                                                             )}
                                                         >
                                                             <div className="flex items-center gap-2 mb-0.5 justify-between">
                                                                 <span className={cn(
