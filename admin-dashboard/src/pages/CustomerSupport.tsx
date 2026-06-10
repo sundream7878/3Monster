@@ -893,9 +893,9 @@ export const CustomerSupport = () => {
                                     )}
 
                                     {/* Thread History & Reply Form in left panel */}
-                                    <div className="pt-4 mt-4 border-t border-slate-200 space-y-4">
-                                        <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                            <MessageSquare className="w-4 h-4 text-indigo-500" /> 답변 및 댓글 기록
+                                    <div className="mt-6 p-4.5 bg-slate-50/70 border border-slate-200 rounded-2xl space-y-4 shadow-sm">
+                                        <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 pb-2.5 border-b border-slate-200">
+                                            <MessageSquare className="w-4 h-4 text-indigo-650" /> 답변 및 댓글 기록
                                         </h4>
                                         
                                         {/* Thread History */}
@@ -909,10 +909,10 @@ export const CustomerSupport = () => {
                                                         <div 
                                                             key={msg.id} 
                                                             className={cn(
-                                                                 "flex flex-col max-w-[85%] py-1.5 px-2.5 rounded-lg border transition-all duration-200 text-left",
+                                                                 "flex flex-col max-w-[85%] py-2 px-3 rounded-xl border transition-all duration-200 text-left shadow-sm",
                                                                  isMsgAdmin 
-                                                                     ? "bg-emerald-50/40 border-emerald-100/50 ml-auto rounded-tr-none" 
-                                                                     : "bg-slate-100/60 border-slate-200/50 mr-auto rounded-tl-none",
+                                                                     ? "bg-emerald-50 border-emerald-200/80 ml-auto rounded-tr-none text-emerald-950" 
+                                                                     : "bg-white border-slate-250 mr-auto rounded-tl-none text-slate-850",
                                                                  editingReplyId === msg.id && "w-full"
                                                              )}
                                                         >
@@ -1026,7 +1026,7 @@ export const CustomerSupport = () => {
                                                             placeholder={isDisabledReply ? "답변 대기 중에는 추가 문의(댓글)를 작성할 수 없습니다." : "추가 문의사항이나 답변을 입력해주세요..."}
                                                             value={replyText}
                                                             onChange={(e) => setReplyText(e.target.value)}
-                                                            className="w-full min-h-[70px] rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-350 focus:bg-white p-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-150 focus:border-indigo-500 transition-all resize-none placeholder:text-slate-400 text-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                                            className="w-full min-h-[70px] rounded-xl bg-white border border-slate-300 hover:border-slate-400 p-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-150 focus:border-indigo-500 transition-all resize-none placeholder:text-slate-400 text-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed shadow-inner"
                                                         />
                                                     </div>
 
