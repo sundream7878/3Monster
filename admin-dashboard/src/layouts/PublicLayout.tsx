@@ -43,7 +43,8 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
     }, [notifications, role]);
 
     const fetchQnaNotifications = React.useCallback(async () => {
-        if (!user && !email) {
+        const userEmail = email || localStorage.getItem('user_email');
+        if (!user && !userEmail) {
             setNotifications([]);
             return;
         }

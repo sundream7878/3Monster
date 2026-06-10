@@ -386,6 +386,7 @@ export const CustomerSupport = () => {
 
             // 즉시 목록 갱신
             await fetchTickets();
+            window.dispatchEvent(new Event('qna-ticket-read'));
 
             // Handle automatic matching / binding
             if (selectedLic) {
@@ -537,6 +538,7 @@ export const CustomerSupport = () => {
                 setSelectedTicketForDetail(data[0]);
             }
             await fetchTickets();
+            window.dispatchEvent(new Event('qna-ticket-read'));
             showToast("댓글이 등록되었습니다.");
         } catch (err: any) {
             console.error("Error submitting reply:", err);
@@ -577,6 +579,7 @@ export const CustomerSupport = () => {
                 setSelectedTicketForDetail(data[0]);
             }
             await fetchTickets();
+            window.dispatchEvent(new Event('qna-ticket-read'));
             showToast("댓글이 수정되었습니다.");
             setEditingReplyId(null);
             setEditingReplyText('');
@@ -611,6 +614,7 @@ export const CustomerSupport = () => {
                 setSelectedTicketForDetail(data[0]);
             }
             await fetchTickets();
+            window.dispatchEvent(new Event('qna-ticket-read'));
             
             showToast("댓글이 삭제되었습니다.");
         } catch (err: any) {
@@ -639,6 +643,7 @@ export const CustomerSupport = () => {
             navigate('/support', { replace: true });
             
             await fetchTickets();
+            window.dispatchEvent(new Event('qna-ticket-read'));
         } catch (err: any) {
             console.error("Error deleting ticket:", err);
             showToast(`문의 삭제 중 오류가 발생했습니다: ${err.message}`, "error");
