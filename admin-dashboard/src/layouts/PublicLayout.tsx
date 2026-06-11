@@ -307,7 +307,8 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                                                         switch (notif.issue_type) {
                                                             case 'bug': issueLabel = '버그/오류'; break;
                                                             case 'feature': issueLabel = '기능제안'; break;
-                                                            case 'license': issueLabel = '라이선스'; break;
+                                                            case 'license': issueLabel = '라이선스'; break;
+                                                            case 'custom': issueLabel = '커스텀의뢰'; break;
                                                             case 'other': issueLabel = '일반문의'; break;
                                                             default: issueLabel = notif.issue_type || '기타';
                                                         }

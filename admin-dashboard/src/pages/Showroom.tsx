@@ -1263,7 +1263,7 @@ export const Showroom = () => {
             {/* Custom request section */}
             <div className="text-center py-12 border-t border-slate-100">
                 <p className="text-slate-400 font-bold mb-4">비즈니스에 맞춤형 기능이 필요하신가요?</p>
-                <Link to="/support">
+                <Link to="/support?type=custom">
                     <Button variant="ghost" className="text-indigo-600 font-black hover:bg-indigo-50 px-8 py-4 h-auto rounded-2xl">
                         커스텀 제작 의뢰하기 <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>

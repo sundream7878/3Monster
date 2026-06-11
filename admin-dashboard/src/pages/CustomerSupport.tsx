@@ -701,6 +701,9 @@ export const CustomerSupport = () => {
             case 'license':
                 typeLabel = '라이선스';
                 break;
+            case 'custom':
+                typeLabel = '커스텀의뢰';
+                break;
             case 'other':
                 typeLabel = '일반문의';
                 break;
@@ -805,6 +808,7 @@ export const CustomerSupport = () => {
                                         <option value="bug">버그/오류 신고</option>
                                         <option value="feature">기능 제안/문의</option>
                                         <option value="license">라이선스 관련</option>
+                                        <option value="custom">커스텀 제작 의뢰</option>
                                         <option value="other">기타</option>
                                     </select>
                                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
@@ -841,7 +845,8 @@ export const CustomerSupport = () => {
                                             <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold border border-indigo-100">
                                                 {selectedTicketForDetail.issue_type === 'bug' ? '버그/오류 신고' :
                                                  selectedTicketForDetail.issue_type === 'feature' ? '기능 제안/문의' :
-                                                 selectedTicketForDetail.issue_type === 'license' ? '라이선스 관련' : '기타'}
+                                                 selectedTicketForDetail.issue_type === 'license' ? '라이선스 관련' :
+                                                 selectedTicketForDetail.issue_type === 'custom' ? '커스텀 제작 의뢰' : '기타'}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
