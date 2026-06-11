@@ -9,7 +9,7 @@ export const Sidebar = () => {
     const adminNavItems = [
         { icon: LayoutDashboard, label: '대시보드', href: '/admin' },
         { icon: Key, label: '발행 도구', href: '/admin/generator' },
-        { icon: Users, label: '전체 관리', href: '/admin/licenses' },
+        { icon: Users, label: '구매자 관리', href: '/admin/licenses' },
         { icon: Bell, label: '알림 관리', href: '/admin/notifications' },
         { icon: HelpCircle, label: '고객센터', href: '/support' },
     ];
@@ -50,15 +50,17 @@ export const Sidebar = () => {
                     ))}
                 </nav>
 
-                <div className="mt-auto">
-                    <button
-                        onClick={() => logout()}
-                        className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-sm font-bold text-slate-400 transition-all duration-200 hover:text-slate-900 group"
-                    >
-                        <LogOut className="h-5 w-5" />
-                        로그아웃
-                    </button>
-                </div>
+                {role !== 'admin' && (
+                    <div className="mt-auto">
+                        <button
+                            onClick={() => logout()}
+                            className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-sm font-bold text-slate-400 transition-all duration-200 hover:text-slate-900 group"
+                        >
+                            <LogOut className="h-5 w-5" />
+                            로그아웃
+                        </button>
+                    </div>
+                )}
             </div>
         </aside>
     );

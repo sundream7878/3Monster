@@ -94,8 +94,8 @@ export const LicenseList = () => {
         <div className="space-y-10">
             <div className="flex justify-between items-end">
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">전체 라이선스 관리</h1>
-                    <p className="text-slate-400 font-medium">현재 발행된 모든 제품의 활성화 상태를 관리합니다.</p>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">구매자 관리</h1>
+                    <p className="text-slate-400 font-medium">현재 등록된 모든 구매자와 라이선스 활성화 상태를 관리합니다.</p>
                 </div>
                 <div className="flex gap-4">
                     <div className="relative w-80">

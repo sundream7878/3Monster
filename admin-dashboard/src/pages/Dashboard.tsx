@@ -2,106 +2,259 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ChevronRight, Layers, Activity, Key, Smartphone, Monitor, Settings, Check, Search } from 'lucide-react';
+import { 
+    Key, 
+    Search,
+    Users as UsersIcon,
+    XCircle,
+    Award,
+    Calendar,
+    BarChart3,
+    Loader2
+} from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { format } from 'date-fns';
 
-const categories = [
-    { label: "NPLace_DB 수집", count: 5, icon: Layers, color: "bg-blue-100 text-blue-600" },
-    { label: "카페 크롤러", count: 10, icon: Smartphone, color: "bg-orange-100 text-orange-600" },
-    { label: "스텔스 댓글", count: 3, icon: Activity, color: "bg-pink-100 text-pink-600" },
-    { label: "페이퍼 크롤러", count: 12, icon: Monitor, color: "bg-emerald-100 text-emerald-600" },
-    { label: "기타 도구", count: 8, icon: Key, color: "bg-purple-100 text-purple-600" },
-];
-
-interface RecentLicense {
-    name: string;
-    type: string;
-    status: string;
-    statusColor: string;
+interface License {
+    id: string;
+    serial_key: string;
+    product_id: string;
+    buyer_name: string;
+    status: 'active' | 'used' | 'unused' | 'expired' | 'blocked';
+    expire_date: string;
+    created_at: string;
+    contact?: string;
+    license_type?: string;
+    price_sold?: number;
 }
 
-interface RecentBuyer {
-    name: string;
+interface AppUser {
+    id: string;
+    uid?: string;
     email: string;
-    channel: string;
+    name?: string;
+    role?: string;
+    channel?: string;
+    created_at?: string;
 }
 
 export const Dashboard = () => {
-    const [recentLicenses, setRecentLicenses] = useState<RecentLicense[]>([]);
-    const [recentBuyers, setRecentBuyers] = useState<RecentBuyer[]>([]);
+    const [allLicenses, setAllLicenses] = useState<License[]>([]);
+    const [allUsers, setAllUsers] = useState<AppUser[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Filter and Search states for User list
+    const [userSearchTerm, setUserSearchTerm] = useState('');
+    const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'buyer' | 'non-buyer' | 'admin'>('all');
+
+    // Period stats state
+    const [statPeriod, setStatPeriod] = useState<'daily' | 'monthly'>('daily');
 
     // Approve Modal states
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
-    const [selectedBuyer, setSelectedBuyer] = useState<RecentBuyer | null>(null);
-    const [availableLicenses, setAvailableLicenses] = useState<any[]>([]);
+    const [selectedUserForMapping, setSelectedUserForMapping] = useState<AppUser | null>(null);
+    const [availableLicenses, setAvailableLicenses] = useState<License[]>([]);
     const [selectedLicenseId, setSelectedLicenseId] = useState('');
     const [licenseSearchTerm, setLicenseSearchTerm] = useState('');
     const [isLoadingLicenses, setIsLoadingLicenses] = useState(false);
 
     const fetchDashboardData = async () => {
-        // Fetch Recent Licenses
-        const { data: licenses } = await supabase
-            .from('licenses')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(5);
+        try {
+            // Fetch Users
+            const { data: usersData, error: usersError } = await supabase
+                .from('users')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (usersError) throw usersError;
+            setAllUsers(usersData || []);
 
-        if (licenses) {
-            const mappedLicenses = licenses.map(item => {
-                const expireDate = item.expire_date ? new Date(item.expire_date) : null;
-                const isExpired = expireDate && expireDate < new Date();
+            // Fetch Licenses
+            const { data: licensesData, error: licensesError } = await supabase
+                .from('licenses')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (licensesError) throw licensesError;
+            setAllLicenses(licensesData || []);
 
-                let status = "사용 가능";
-                let statusColor = "bg-blue-500";
-
-                if (item.status === 'blocked') {
-                    status = "정지";
-                    statusColor = "bg-gray-400";
-                } else if (isExpired) {
-                    status = "만료";
-                    statusColor = "bg-rose-500";
-                } else if (item.status === 'unused') {
-                    status = "대기중";
-                    statusColor = "bg-indigo-400";
-                } else if (expireDate) {
-                    const daysLeft = Math.ceil((expireDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    if (daysLeft <= 7) {
-                        status = "만료 예정";
-                        statusColor = "bg-orange-400";
-                    }
-                }
-
-                return {
-                    name: item.buyer_name || "Unknown",
-                    type: item.product_id || "NPLace_DB",
-                    status,
-                    statusColor
-                };
-            });
-            setRecentLicenses(mappedLicenses);
-        }
-
-        // Fetch Recent Buyers / Pending Users
-        const { data: buyers } = await supabase
-            .from('users')
-            .select('*')
-            .or('role.eq.buyer,channel.ilike.%Pending%')
-            .order('created_at', { ascending: false })
-            .limit(5);
-
-        if (buyers) {
-            setRecentBuyers(buyers.map(b => ({
-                name: b.name || "이름 없음",
-                email: b.email,
-                channel: b.channel || "Direct"
-            })));
+        } catch (err) {
+            console.error("Error fetching dashboard data:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleOpenApproveModal = async (buyer: RecentBuyer) => {
-        setSelectedBuyer(buyer);
+    useEffect(() => {
+        fetchDashboardData();
+
+        // Realtime Subscriptions
+        const channel = supabase
+            .channel('dashboard-realtime-sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'licenses' }, () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => fetchDashboardData())
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
+
+    // 1. Calculate general stats
+    const totalUsers = allUsers.length;
+    const totalLicenses = allLicenses.length;
+
+    // Upgraded/Loyal users (contacts with 2 or more licenses)
+    const uniqueContacts = Array.from(new Set(allLicenses.map(l => l.contact?.toLowerCase()).filter(Boolean)));
+    const upgradeCount = uniqueContacts.filter(email => {
+        const userLicenses = allLicenses.filter(l => l.contact?.toLowerCase() === email);
+        return userLicenses.length >= 2;
+    }).length;
+
+    // Stopped users (contacts who purchased in past but none is currently active/valid)
+    const now = new Date();
+    const stoppedCount = uniqueContacts.filter(email => {
+        const userLicenses = allLicenses.filter(l => l.contact?.toLowerCase() === email);
+        const hasActive = userLicenses.some(l => {
+            const expireDate = l.expire_date ? new Date(l.expire_date) : null;
+            const isExpired = expireDate && expireDate < now;
+            return (l.status === 'active' || l.status === 'used') && !isExpired;
+        });
+        return !hasActive;
+    }).length;
+
+    // Product Normalizer for aggregation
+    const normalizeProduct = (productId: string) => {
+        if (!productId) return '기타 도구';
+        const lower = productId.toLowerCase();
+        if (lower === 'placedb' || lower === 'nplace-db' || lower === 'nplace_db') {
+            return 'NPLace_DB';
+        }
+        if (lower === 'cafecrawler' || lower === 'cafe-crawler' || lower === 'cafe_crawler') {
+            return '카페 크롤러';
+        }
+        return productId;
+    };
+
+    // 2. Aggregate counts & sales by product and package (license_type)
+    const getProductPackageStats = () => {
+        const stats: { [product: string]: { [pkg: string]: { count: number; sales: number } } } = {};
+        
+        allLicenses.forEach(lic => {
+            const prod = normalizeProduct(lic.product_id);
+            const pkg = lic.license_type || '기타';
+            
+            if (!stats[prod]) {
+                stats[prod] = {};
+            }
+            if (!stats[prod][pkg]) {
+                stats[prod][pkg] = { count: 0, sales: 0 };
+            }
+            
+            stats[prod][pkg].count += 1;
+            stats[prod][pkg].sales += lic.price_sold || 0;
+        });
+
+        const rows: { product: string; pkg: string; count: number; sales: number }[] = [];
+        Object.keys(stats).forEach(prod => {
+            Object.keys(stats[prod]).forEach(pkg => {
+                rows.push({
+                    product: prod,
+                    pkg,
+                    count: stats[prod][pkg].count,
+                    sales: stats[prod][pkg].sales
+                });
+            });
+        });
+
+        // Sort: NPLace_DB first, then by package length/descending
+        return rows.sort((a, b) => a.product.localeCompare(b.product) || b.pkg.localeCompare(a.pkg));
+    };
+
+    // 3. Period-based statistics (Daily/Monthly)
+    const getDailyStats = () => {
+        const daily: { [dateStr: string]: { count: number; sales: number } } = {};
+        
+        // Initialize last 7 days
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+            daily[dateStr] = { count: 0, sales: 0 };
+        }
+
+        allLicenses.forEach(lic => {
+            if (!lic.created_at) return;
+            const licDate = new Date(lic.created_at);
+            const dateStr = licDate.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+            if (daily[dateStr] !== undefined) {
+                daily[dateStr].count += 1;
+                daily[dateStr].sales += lic.price_sold || 0;
+            }
+        });
+
+        return Object.entries(daily).map(([date, data]) => ({ label: date, ...data }));
+    };
+
+    const getMonthlyStats = () => {
+        const monthly: { [monthStr: string]: { count: number; sales: number } } = {};
+        
+        // Initialize last 6 months
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            const monthStr = d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit' });
+            monthly[monthStr] = { count: 0, sales: 0 };
+        }
+
+        allLicenses.forEach(lic => {
+            if (!lic.created_at) return;
+            const licDate = new Date(lic.created_at);
+            const monthStr = licDate.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit' });
+            if (monthly[monthStr] !== undefined) {
+                monthly[monthStr].count += 1;
+                monthly[monthStr].sales += lic.price_sold || 0;
+            }
+        });
+
+        return Object.entries(monthly).map(([month, data]) => ({ label: month, ...data }));
+    };
+
+    const periodData = statPeriod === 'daily' ? getDailyStats() : getMonthlyStats();
+    const maxPeriodSales = Math.max(...periodData.map(d => d.sales || 1));
+
+    // 4. Filter user list
+    const filteredUsers = allUsers.filter(u => {
+        const nameMatch = (u.name || '').toLowerCase().includes(userSearchTerm.toLowerCase());
+        const emailMatch = (u.email || '').toLowerCase().includes(userSearchTerm.toLowerCase());
+        const matchesSearch = nameMatch || emailMatch;
+
+        if (userRoleFilter === 'all') return matchesSearch;
+
+        const isBuyer = u.role === 'buyer' || allLicenses.some(l => l.contact?.toLowerCase() === u.email?.toLowerCase());
+        const isAdminUser = u.role === 'admin';
+
+        if (userRoleFilter === 'buyer') return matchesSearch && isBuyer && !isAdminUser;
+        if (userRoleFilter === 'admin') return matchesSearch && isAdminUser;
+        if (userRoleFilter === 'non-buyer') return matchesSearch && !isBuyer && !isAdminUser;
+
+        return matchesSearch;
+    });
+
+    const getUserType = (u: AppUser) => {
+        if (u.role === 'admin') {
+            return { label: '관리자', color: 'bg-purple-50 text-purple-700 border-purple-200' };
+        }
+        const isBuyer = u.role === 'buyer' || allLicenses.some(l => l.contact?.toLowerCase() === u.email?.toLowerCase());
+        if (isBuyer) {
+            return { label: '구매자', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+        }
+        return { label: '비구매자', color: 'bg-slate-50 text-slate-500 border-slate-200' };
+    };
+
+    // 5. License Matching Actions
+    const handleOpenApproveModal = async (userObj: AppUser) => {
+        setSelectedUserForMapping(userObj);
         setIsApproveModalOpen(true);
         setIsLoadingLicenses(true);
         setLicenseSearchTerm('');
@@ -115,31 +268,32 @@ export const Dashboard = () => {
             
             if (error) throw error;
             
+            // Available licenses (contact matches user email OR contact is blank/null)
             const filtered = (data || []).filter(lic => {
                 const hasNoEmail = !lic.contact || lic.contact.trim() === '';
-                const isSameEmail = lic.contact?.toLowerCase() === buyer.email.toLowerCase();
+                const isSameEmail = lic.contact?.toLowerCase() === userObj.email.toLowerCase();
                 return hasNoEmail || isSameEmail;
             });
 
-            setAvailableLicenses(filtered);
+            setAvailableLicenses(filtered as License[]);
             
-            // Auto-select exact matching buyer_name
+            // Auto-select exact matching buyer_name or contact
             const exactMatch = filtered.find(lic => 
-                lic.buyer_name?.toLowerCase() === buyer.name.toLowerCase() ||
-                lic.contact?.toLowerCase() === buyer.email.toLowerCase()
+                (lic.buyer_name && userObj.name && lic.buyer_name.toLowerCase() === userObj.name.toLowerCase()) ||
+                (lic.contact && lic.contact.toLowerCase() === userObj.email.toLowerCase())
             );
             if (exactMatch) {
                 setSelectedLicenseId(exactMatch.id);
             }
         } catch (err) {
-            console.error("Error fetching available licenses:", err);
+            console.error("Error fetching licenses for mapping:", err);
         } finally {
             setIsLoadingLicenses(false);
         }
     };
 
     const handleApproveAndMap = async () => {
-        if (!selectedBuyer) return;
+        if (!selectedUserForMapping) return;
         if (!selectedLicenseId) {
             alert("매칭할 라이선스를 선택해주세요.");
             return;
@@ -150,188 +304,317 @@ export const Dashboard = () => {
             const { error: licError } = await supabase
                 .from('licenses')
                 .update({ 
-                    contact: selectedBuyer.email.toLowerCase(),
-                    buyer_name: selectedBuyer.name
+                    contact: selectedUserForMapping.email.toLowerCase(),
+                    buyer_name: selectedUserForMapping.name || selectedUserForMapping.email.split('@')[0]
                 })
                 .eq('id', selectedLicenseId);
 
             if (licError) throw licError;
 
             // 2. Update user role and channel to approve
-            const nextChannel = selectedBuyer.channel.replace(/\s*\(Pending\)/g, '');
+            const nextChannel = selectedUserForMapping.channel 
+                ? selectedUserForMapping.channel.replace(/\s*\(Pending\)/g, '') 
+                : 'Direct';
+            
             const { error: userError } = await supabase
                 .from('users')
                 .update({ 
                     role: 'buyer',
                     channel: nextChannel 
                 })
-                .eq('email', selectedBuyer.email);
+                .eq('email', selectedUserForMapping.email);
 
             if (userError) throw userError;
 
-            alert("라이선스 매칭 및 구매자 승인이 완료되었습니다.");
+            alert("라이선스 매칭 및 구매자 전환 승인이 완료되었습니다.");
             setIsApproveModalOpen(false);
             await fetchDashboardData();
         } catch (err: any) {
-            console.error("Error approving and mapping:", err);
+            console.error("Error mapping license to user:", err);
             alert(`승인 처리 중 오류 발생: ${err.message}`);
         }
     };
 
-    useEffect(() => {
-        fetchDashboardData();
+    const productPackageRows = getProductPackageStats();
 
-        // Realtime Subscriptions
-        const licenseChannel = supabase
-            .channel('dashboard-sync')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'licenses' }, () => fetchDashboardData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => fetchDashboardData())
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(licenseChannel);
-        };
-    }, []);
+    if (loading) {
+        return (
+            <div className="flex h-[60vh] items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+            </div>
+        );
+    }
 
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-            {/* Middle Content Column (8 Units) */}
-            <div className="xl:col-span-8 space-y-10">
+        <div className="space-y-10">
+            {/* Page Header */}
+            <div className="flex flex-col gap-2">
+                <h1 className="text-3xl font-black text-slate-800 tracking-tight">관리자 대시보드</h1>
+                <p className="text-slate-400 font-medium">서비스 이용 현황 및 통합 매출 통계 보드입니다.</p>
+            </div>
 
+            {/* General Stats KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <Card className="p-6 flex items-center gap-5 bg-white border-none shadow-sm hover:shadow-md transition-shadow">
+                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center bg-blue-50 text-blue-600">
+                        <UsersIcon className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">앱 가입 고객</p>
+                        <h3 className="text-2xl font-black text-slate-800 mt-1">{totalUsers}명</h3>
+                    </div>
+                </Card>
+                <Card className="p-6 flex items-center gap-5 bg-white border-none shadow-sm hover:shadow-md transition-shadow">
+                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center bg-purple-50 text-purple-600">
+                        <Key className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">발행 라이선스 수</p>
+                        <h3 className="text-2xl font-black text-slate-800 mt-1">{totalLicenses}개</h3>
+                    </div>
+                </Card>
+                <Card className="p-6 flex items-center gap-5 bg-white border-none shadow-sm hover:shadow-md transition-shadow">
+                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center bg-emerald-50 text-emerald-600">
+                        <Award className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">업그레이드/재구매</p>
+                        <h3 className="text-2xl font-black text-slate-800 mt-1">{upgradeCount}명</h3>
+                    </div>
+                </Card>
+                <Card className="p-6 flex items-center gap-5 bg-white border-none shadow-sm hover:shadow-md transition-shadow">
+                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center bg-rose-50 text-rose-600">
+                        <XCircle className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">이용 중단 고객</p>
+                        <h3 className="text-2xl font-black text-slate-800 mt-1">{stoppedCount}명</h3>
+                    </div>
+                </Card>
+            </div>
 
-                {/* Categories Section */}
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-black text-slate-800">제품군별 현황</h3>
-                        <Button variant="ghost" className="text-indigo-600 font-bold p-0">모두 보기</Button>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        {categories.map((cat) => (
-                            <Card key={cat.label} className="p-6 flex flex-col items-center text-center gap-3 group hover:scale-105 transition-transform cursor-pointer">
-                                <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center", cat.color)}>
-                                    <cat.icon className="w-6 h-6" />
+            {/* Split Content Columns */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                
+                {/* Left Column (8 Units) */}
+                <div className="xl:col-span-8 space-y-8">
+                    
+                    {/* Product & Package Sales Summary Card */}
+                    <Card className="p-8 bg-white border-none shadow-sm rounded-3xl space-y-6">
+                        <div className="flex items-center gap-3">
+                            <BarChart3 className="w-5 h-5 text-indigo-650" />
+                            <h3 className="text-lg font-black text-slate-800">제품 및 패키지별 발행/판매 현황</h3>
+                        </div>
+                        <div className="overflow-hidden border border-slate-100 rounded-2xl">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-slate-50/70">
+                                    <tr className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-left">
+                                        <th className="px-6 py-4">제품군</th>
+                                        <th className="px-6 py-4">패키지</th>
+                                        <th className="px-6 py-4">발행 건수</th>
+                                        <th className="px-6 py-4 text-right">총 판매액</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-sm font-semibold">
+                                    {productPackageRows.length > 0 ? (
+                                        productPackageRows.map((row, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50/30 transition-colors">
+                                                <td className="px-6 py-4 font-black text-slate-700">{row.product}</td>
+                                                <td className="px-6 py-4 text-slate-500">
+                                                    <span className="px-2.5 py-1 text-[10px] font-black rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                                        {row.pkg}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-600 font-bold">{row.count}건</td>
+                                                <td className="px-6 py-4 text-right text-indigo-600 font-black">{row.sales.toLocaleString()}원</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-bold">집계 데이터가 존재하지 않습니다.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+
+                    {/* App Registered Users List Table */}
+                    <Card className="p-8 bg-white border-none shadow-sm rounded-3xl space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <UsersIcon className="w-5 h-5 text-indigo-650" />
+                                <h3 className="text-lg font-black text-slate-800">앱가입 고객 리스트</h3>
+                            </div>
+
+                            {/* Search and Filters */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="relative w-52">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <Input
+                                        placeholder="이름 또는 이메일 검색..."
+                                        value={userSearchTerm}
+                                        onChange={e => setUserSearchTerm(e.target.value)}
+                                        className="pl-9 h-9 text-xs font-bold bg-slate-50 border-none rounded-xl"
+                                    />
                                 </div>
-                                <div>
-                                    <p className="text-[11px] font-black text-slate-800 leading-tight mb-1">{cat.label}</p>
-                                    <p className="text-[10px] text-slate-400 font-bold">({cat.count} Candidates)</p>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
+                                <select
+                                    value={userRoleFilter}
+                                    onChange={e => setUserRoleFilter(e.target.value as any)}
+                                    className="h-9 px-3 text-xs font-bold bg-slate-50 border-none rounded-xl text-slate-600 outline-none focus:ring-2 focus:ring-indigo-100"
+                                >
+                                    <option value="all">구분 전체</option>
+                                    <option value="buyer">구매자</option>
+                                    <option value="non-buyer">비구매자</option>
+                                    <option value="admin">관리자</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="overflow-hidden border border-slate-100 rounded-2xl">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-slate-50/70">
+                                    <tr className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-left">
+                                        <th className="px-6 py-4 w-12 text-center">번호</th>
+                                        <th className="px-6 py-4">가입일자</th>
+                                        <th className="px-6 py-4">이름</th>
+                                        <th className="px-6 py-4">이메일</th>
+                                        <th className="px-6 py-4">가입 경로</th>
+                                        <th className="px-6 py-4">회원 구분</th>
+                                        <th className="px-6 py-4 text-right">라이선스 제어</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-xs font-semibold">
+                                    {filteredUsers.length > 0 ? (
+                                        filteredUsers.map((u, idx) => {
+                                            const type = getUserType(u);
+                                            const isNonBuyer = type.label === '비구매자';
+                                            return (
+                                                <tr key={u.id} className="hover:bg-slate-50/30 transition-colors">
+                                                    <td className="px-6 py-4 text-center text-slate-400 font-bold">{idx + 1}</td>
+                                                    <td className="px-6 py-4 text-slate-500 font-bold">
+                                                        {u.created_at ? format(new Date(u.created_at), 'yyyy.MM.dd HH:mm') : '-'}
+                                                    </td>
+                                                    <td className="px-6 py-4 font-black text-slate-700">{u.name || '이름 없음'}</td>
+                                                    <td className="px-6 py-4 text-slate-600 font-mono">{u.email}</td>
+                                                    <td className="px-6 py-4 text-slate-500">{u.channel || 'Direct'}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={cn("px-2.5 py-1 rounded-full text-[9px] font-black border uppercase tracking-wider", type.color)}>
+                                                            {type.label}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        {u.role !== 'admin' && (
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => handleOpenApproveModal(u)}
+                                                                className={cn(
+                                                                    "h-7 px-3 text-[10px] font-black rounded-lg transition-all",
+                                                                    isNonBuyer
+                                                                        ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-100"
+                                                                        : "bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200"
+                                                                )}
+                                                            >
+                                                                {isNonBuyer ? "라이선스 매칭" : "추가 매칭"}
+                                                            </Button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={7} className="px-6 py-10 text-center text-slate-400 font-bold">가입 회원이 존재하지 않거나 검색 결과가 없습니다.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
                 </div>
 
-                {/* Recruitment Progress Table */}
-                <div className="space-y-6 pb-10">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-black text-slate-800">최근 발행 현황</h3>
-                        <Button variant="ghost" className="text-indigo-600 font-bold p-0">전체 보기</Button>
-                    </div>
-                    <Card className="overflow-hidden p-0 border-none">
-                        <table className="w-full">
-                            <thead className="bg-slate-50/50">
-                                <tr className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-left">
-                                    <th className="px-8 py-5">구매자 성함</th>
-                                    <th className="px-8 py-5">제품군</th>
-                                    <th className="px-8 py-5">진행 상태</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {recentLicenses.length > 0 ? (
-                                    recentLicenses.map((row, idx) => (
-                                        <tr key={idx} className="group transition-colors hover:bg-slate-50/30">
-                                            <td className="px-8 py-5 font-bold text-slate-700 text-sm">{row.name}</td>
-                                            <td className="px-8 py-5 font-bold text-slate-500 text-sm">{row.type}</td>
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={cn("h-2 w-2 rounded-full", row.statusColor)} />
-                                                    <span className="text-sm font-bold text-slate-600">{row.status}</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={3} className="px-8 py-10 text-center text-slate-400 text-sm font-medium">발행된 라이선스가 없습니다.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                {/* Right Column (4 Units) */}
+                <div className="xl:col-span-4 space-y-8">
+                    
+                    {/* Period Sales Statistics Card */}
+                    <Card className="p-8 bg-white border-none shadow-sm rounded-3xl space-y-6">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-3">
+                                <Calendar className="w-5 h-5 text-indigo-650" />
+                                <h3 className="text-lg font-black text-slate-800">기간별 발행/판매 통계</h3>
+                            </div>
+                            
+                            {/* Toggle switcher */}
+                            <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+                                <button
+                                    onClick={() => setStatPeriod('daily')}
+                                    className={cn(
+                                        "px-4 py-2 text-xs font-black rounded-lg transition-all",
+                                        statPeriod === 'daily' ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    일별 (최근 7일)
+                                </button>
+                                <button
+                                    onClick={() => setStatPeriod('monthly')}
+                                    className={cn(
+                                        "px-4 py-2 text-xs font-black rounded-lg transition-all",
+                                        statPeriod === 'monthly' ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    월별 (최근 6개월)
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Period List with beautiful progress bar visual */}
+                        <div className="space-y-4">
+                            {periodData.map((item: any, idx: number) => {
+                                const percentage = maxPeriodSales > 0 ? (item.sales / maxPeriodSales) * 100 : 0;
+                                return (
+                                    <div key={idx} className="space-y-1.5 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                                        <div className="flex justify-between items-center text-xs font-bold text-slate-600">
+                                            <span>{item.label}</span>
+                                            <span className="text-indigo-650 font-black">
+                                                {item.sales.toLocaleString()}원 <span className="text-[10px] text-slate-400 font-bold">({item.count}건)</span>
+                                            </span>
+                                        </div>
+                                        {/* Progress Bar Container */}
+                                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                            <div 
+                                                className="bg-indigo-600 h-full rounded-full transition-all duration-500" 
+                                                style={{ width: `${Math.max(3, percentage)}%` }} 
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </Card>
                 </div>
             </div>
 
-            {/* Right Sidebar Column (4 Units) */}
-            <div className="xl:col-span-4 space-y-8">
-                {/* New Licenses Area */}
-                <div className="space-y-6 pt-4">
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-lg font-black text-slate-800">신규 구매자</h4>
-                        <Button variant="ghost" className="text-indigo-600 font-bold p-0 h-auto">모두 보기</Button>
-                    </div>
-                    <div className="space-y-4">
-                        {recentBuyers.length > 0 ? (
-                            recentBuyers.map((user, i) => (
-                                <div key={i} className="flex items-center gap-4 group p-2 rounded-2xl hover:bg-white transition-colors">
-                                    <img src={`https://ui-avatars.com/api/?name=${user.name}&background=EEF2FF&color=6366F1`} className="h-12 w-12 rounded-2xl" alt={user.name} />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-sm font-black text-slate-800 truncate">{user.name}</p>
-                                            {user.channel.includes('Pending') && (
-                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-100 whitespace-nowrap animate-pulse">
-                                                    승인 대기
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-[11px] text-slate-400 font-bold mt-0.5 truncate">{user.email}</p>
-                                        <p className="text-[10px] text-indigo-500 font-bold">Contact via {user.channel}</p>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        {user.channel.includes('Pending') ? (
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm"
-                                                onClick={() => handleOpenApproveModal(user)}
-                                                className="h-8 px-3 text-xs font-black text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl flex items-center gap-1 shadow-sm"
-                                            >
-                                                <Check className="h-3.5 w-3.5" /> 승인
-                                            </Button>
-                                        ) : (
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 bg-indigo-50"><Settings className="h-3 w-3" /></Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 bg-indigo-50"><ChevronRight className="h-3 w-3" /></Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-xs text-slate-400 font-bold text-center py-4">신규 구매자가 없습니다.</p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Approve Modal */}
+            {/* Approve / Match License Modal */}
             <Modal
                 isOpen={isApproveModalOpen}
                 onClose={() => setIsApproveModalOpen(false)}
                 title="구매자 수동 승인 및 라이선스 매칭"
                 className="max-w-md bg-white border-none"
             >
-                {selectedBuyer && (
+                {selectedUserForMapping && (
                     <div className="space-y-6">
                         <div className="p-4 bg-slate-50 rounded-2xl space-y-2">
-                            <p className="text-xs text-slate-400 font-bold">신청 구매자 정보</p>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">대상 고객 정보</p>
                             <div className="flex items-center gap-3">
-                                <img src={`https://ui-avatars.com/api/?name=${selectedBuyer.name}&background=EEF2FF&color=6366F1`} className="h-10 w-10 rounded-xl" alt={selectedBuyer.name} />
+                                <img src={`https://ui-avatars.com/api/?name=${selectedUserForMapping.name || selectedUserForMapping.email}&background=EEF2FF&color=6366F1`} className="h-10 w-10 rounded-xl" alt={selectedUserForMapping.name} />
                                 <div className="text-left">
-                                    <p className="text-sm font-black text-slate-800">{selectedBuyer.name}</p>
-                                    <p className="text-xs text-slate-400 font-semibold">{selectedBuyer.email}</p>
+                                    <p className="text-sm font-black text-slate-800">{selectedUserForMapping.name || '이름 없음'}</p>
+                                    <p className="text-xs text-slate-400 font-semibold">{selectedUserForMapping.email}</p>
                                 </div>
                             </div>
                             <div className="text-left mt-1">
-                                <span className="text-[10px] text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg font-bold">
-                                    가입 채널: {selectedBuyer.channel}
+                                <span className="text-[9px] text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded font-black uppercase tracking-wider">
+                                    현재 역할: {selectedUserForMapping.role || 'user'}
                                 </span>
                             </div>
                         </div>
@@ -341,7 +624,7 @@ export const Dashboard = () => {
                                 매칭할 라이선스 검색 및 선택
                             </label>
                             <div className="relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-350" />
                                 <Input
                                     placeholder="구매자명, 제품명, 시리얼로 검색..."
                                     value={licenseSearchTerm}
@@ -359,7 +642,7 @@ export const Dashboard = () => {
                             ).length > 0 ? (
                                 <select
                                     required
-                                    className="w-full h-12 rounded-xl bg-slate-50 px-4 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-indigo-100 transition-all appearance-none"
+                                    className="w-full h-12 rounded-xl bg-slate-50 px-4 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-indigo-100 transition-all appearance-none text-slate-800"
                                     value={selectedLicenseId}
                                     onChange={e => setSelectedLicenseId(e.target.value)}
                                 >
@@ -370,7 +653,7 @@ export const Dashboard = () => {
                                         (lic.serial_key || '').toLowerCase().includes(licenseSearchTerm.toLowerCase())
                                     ).map((lic) => (
                                         <option key={lic.id} value={lic.id}>
-                                            [{lic.product_id}] {lic.buyer_name || '이름 없음'} ({lic.serial_key ? lic.serial_key.substring(0, 8) + '...' : '시리얼 없음'})
+                                            [{normalizeProduct(lic.product_id)}] {lic.buyer_name || '미할당'} ({lic.serial_key ? lic.serial_key.substring(0, 8) + '...' : '시리얼 없음'})
                                         </option>
                                     ))}
                                 </select>
