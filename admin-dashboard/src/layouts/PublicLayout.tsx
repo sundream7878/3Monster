@@ -288,7 +288,7 @@ export const PublicLayout: React.FC<{ children?: React.ReactNode }> = ({ childre
                                                     if (isQna) {
                                                         categoryBadge = (
                                                             <span className="bg-blue-50/80 text-blue-600 border border-blue-100/30 px-1.5 py-0.5 rounded text-[9px] font-black tracking-wide">
-                                                                Q&A 제품문의
+                                                                제품 문의
                                                             </span>
                                                         );
                                                         subBadge = (

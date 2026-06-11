@@ -1490,7 +1490,7 @@ export const CustomerSupport = () => {
                             )}
                         >
                             <span className="flex items-center gap-1.5">
-                                🙋‍♂️ Q&A 제품문의
+                                🙋‍♂️ 제품 문의
                                 <span className="flex items-center gap-1 ml-1">
                                     {qnaClosedCount > 0 && (
                                         <span className="inline-flex items-center justify-center bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full text-[9px] font-bold border border-emerald-200/60">
@@ -1533,7 +1533,7 @@ export const CustomerSupport = () => {
                                     (ticket.email && verifiedEmail && ticket.email.toLowerCase() === verifiedEmail.toLowerCase()) || 
                                     (ticket.uid === user?.id);
                                     
-                                const isExpanded = expandedTicketId === ticket.id;
+                                const isExpanded = String(expandedTicketId) === String(ticket.id) || (selectedTicketForDetail && String(selectedTicketForDetail.id) === String(ticket.id));
                                 const canViewDetail = isAdmin || isOwn;
 
                                 return (
