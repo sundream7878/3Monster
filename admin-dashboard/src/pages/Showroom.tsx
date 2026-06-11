@@ -808,7 +808,7 @@ export const Showroom = () => {
                                                     className="overflow-hidden bg-slate-50/50 border-t border-slate-100 px-2 py-2.5 space-y-2.5"
                                                 >
                                                     {/* 1. New Question Registration Form */}
-                                                    {user ? (
+                                                    {user && !isAdmin && (
                                                         <form onSubmit={(e) => handleSubmitQuestion(product.id, e)} className="space-y-1.5 bg-white p-2 rounded-xl border border-indigo-200 shadow-sm text-left">
                                                             <div className="flex justify-between items-center pb-1">
                                                                 <p className="text-[10px] font-black text-indigo-500 pl-1 uppercase tracking-wider flex items-center gap-1.5">
@@ -831,7 +831,8 @@ export const Showroom = () => {
                                                                 />
                                                             </div>
                                                         </form>
-                                                    ) : (
+                                                    )}
+                                                    {!user && !isAdmin && (
                                                         <div className="bg-indigo-50/40 p-2 rounded-xl border border-indigo-50 flex flex-col items-center justify-between gap-2 text-left">
                                                             <p className="text-xs text-indigo-900 font-bold">🙋‍♂️ 질문 확인 및 등록을 위해 로그인해 주세요.</p>
                                                             <Link to="/support" className="w-full">
@@ -855,7 +856,7 @@ export const Showroom = () => {
                                                                 const isQExpanded = String(expandedQuestionId) === String(q.id);
                                                                 const thread = parseThread(q);
                                                                 const isQOwner = q.uid === user?.id || (q.email && verifiedEmail && q.email.toLowerCase() === verifiedEmail.toLowerCase());
-                                                                const canReply = isQOwner || isAdmin;
+                                                                const canReply = isQOwner && !isAdmin;
 
                                                                 return (
                                                                     <div key={q.id} id={`ticket-${q.id}`} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
@@ -940,7 +941,7 @@ export const Showroom = () => {
                                                                                             {thread.map((msg) => {
                                                                                                     const isMsgAdmin = msg.sender === 'admin';
                                                                                                     const currentUserEmail = verifiedEmail || user?.email;
-                                                                                                    const isMsgOwner = (msg.sender_email && currentUserEmail && msg.sender_email.toLowerCase() === currentUserEmail.toLowerCase()) || (msg.sender === 'admin' && isAdmin);
+                                                                                                    const isMsgOwner = !isAdmin && (msg.sender_email && currentUserEmail && msg.sender_email.toLowerCase() === currentUserEmail.toLowerCase());
                                                                                                     return (
                                                                                                         <div 
                                                                                                             key={msg.id} 
@@ -1001,7 +1002,23 @@ export const Showroom = () => {
                                                                                 )}
 
                                                                                 {/* Reply Form (Visible to Admin or Question Owner) */}
-                                                                                {canReply ? (
+                                                                                {isAdmin ? (
+                                                                                    <div className="pt-1 text-right">
+                                                                                        <Link to={`/support?ticket_id=${q.id}`}>
+                                                                                            <button 
+                                                                                                disabled={q.status === 'closed'}
+                                                                                                className={cn(
+                                                                                                    "text-[10px] font-black px-3 py-1 rounded-lg border transition-all",
+                                                                                                    q.status !== 'closed'
+                                                                                                        ? "text-indigo-650 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100/80 border-indigo-100/50 cursor-pointer"
+                                                                                                        : "text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed"
+                                                                                                )}
+                                                                                            >
+                                                                                                답변 달러가기
+                                                                                            </button>
+                                                                                        </Link>
+                                                                                    </div>
+                                                                                ) : canReply ? (
                                                                                     activeReplyBoxQuestionId === q.id ? (
                                                                                         <div className="pt-1 border-t border-slate-100 space-y-1">
                                                                                             <textarea
@@ -1013,44 +1030,17 @@ export const Showroom = () => {
                                                                                             
                                                                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                                                                                 <div className="flex gap-1">
-                                                                                                    {isAdmin ? (
-                                                                                                        <div className="relative group w-fit">
-                                                                                                            <input
-                                                                                                                type="file"
-                                                                                                                accept="image/*"
-                                                                                                                onChange={e => setReplyImageMap(prev => ({ ...prev, [q.id]: e.target.files?.[0] || null }))}
-                                                                                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                                                                            />
-                                                                                                            <div className="h-7 px-2 rounded-md bg-white hover:bg-slate-50 border border-slate-200 flex items-center transition-all">
-                                                                                                                <ImageIcon className="w-3 h-3 text-slate-400 mr-1" />
-                                                                                                                <span className="text-[9px] font-black text-slate-500 truncate max-w-[60px]">
-                                                                                                                    {replyImageMap[q.id] ? replyImageMap[q.id]?.name : '사진'}
-                                                                                                                </span>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    ) : null}
                                                                                                 </div>
                                                                                                 
                                                                                                 <div className="flex gap-2">
-                                                                                                    {isAdmin ? (
-                                                                                                        <Button 
-                                                                                                            onClick={() => handleSubmitReply(q, 'closed')}
-                                                                                                            isLoading={submittingReplyId === q.id}
-                                                                                                            disabled={!(replyTextMap[q.id] || '').trim() && !replyImageMap[q.id]}
-                                                                                                            className="h-7 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-emerald-100 cursor-pointer"
-                                                                                                        >
-                                                                                                            {thread.some(msg => msg.sender === 'admin') ? '수정' : '등록'}
-                                                                                                        </Button>
-                                                                                                    ) : (
-                                                                                                        <Button 
-                                                                                                            onClick={() => handleSubmitReply(q, 'open')}
-                                                                                                            isLoading={submittingReplyId === q.id}
-                                                                                                            disabled={!(replyTextMap[q.id] || '').trim()}
-                                                                                                            className="h-7 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-indigo-100 cursor-pointer"
-                                                                                                        >
-                                                                                                            댓글 등록
-                                                                                                        </Button>
-                                                                                                    )}
+                                                                                                    <Button 
+                                                                                                        onClick={() => handleSubmitReply(q, 'open')}
+                                                                                                        isLoading={submittingReplyId === q.id}
+                                                                                                        disabled={!(replyTextMap[q.id] || '').trim()}
+                                                                                                        className="h-7 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black transition-all shadow-md shadow-indigo-100 cursor-pointer"
+                                                                                                    >
+                                                                                                        댓글 등록
+                                                                                                    </Button>
                                                                                                 </div>
                                                                                             </div>
                                                                                         </div>
@@ -1059,20 +1049,16 @@ export const Showroom = () => {
                                                                                             <button 
                                                                                                 onClick={() => {
                                                                                                     setActiveReplyBoxQuestionId(q.id);
-                                                                                                    const lastAdminMsg = [...thread].reverse().find(msg => msg.sender === 'admin');
-                                                                                                    if (lastAdminMsg) {
-                                                                                                        setReplyTextMap(prev => ({ ...prev, [q.id]: lastAdminMsg.text }));
-                                                                                                    }
                                                                                                 }}
                                                                                                 className="text-[10px] font-black text-indigo-650 hover:text-indigo-800 px-3 py-1 bg-indigo-50 hover:bg-indigo-100/80 rounded-lg border border-indigo-100/50 transition-all cursor-pointer"
                                                                                             >
-                                                                                                {thread.some(msg => msg.sender === 'admin') ? '수정 하기' : '답변 달기'}
+                                                                                                답변 달기
                                                                                             </button>
                                                                                         </div>
                                                                                     )
                                                                                 ) : (
                                                                                     <p className="text-[9px] text-slate-400 text-center italic pt-1 border-t border-slate-100">
-                                                                                        질문 작성자 및 관리자만 대댓글을 달 수 있습니다.
+                                                                                        질문 작성자만 대댓글을 달 수 있습니다.
                                                                                     </p>
                                                                                 )}
                                                                             </div>
