@@ -66,7 +66,7 @@ export const CustomerSupport = () => {
     const [tickets, setTickets] = useState<any[]>([]);
     const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedProduct, setSelectedProduct] = useState('PlaceDB');
+    const [selectedProduct, setSelectedProduct] = useState('NPLace_DB');
 
     const [selectedTicketForDetail, setSelectedTicketForDetail] = useState<any | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -122,9 +122,10 @@ export const CustomerSupport = () => {
                 
                 const matchProd = found.description?.match(/\[문의 제품:\s*([^\]\s\()]+)/);
                 if (matchProd && matchProd[1]) {
-                    setSelectedProduct(matchProd[1]);
+                    const parsedProd = matchProd[1].toLowerCase() === 'placedb' ? 'NPLace_DB' : matchProd[1];
+                    setSelectedProduct(parsedProd);
                 } else {
-                    setSelectedProduct('PlaceDB');
+                    setSelectedProduct('NPLace_DB');
                 }
 
                 const matchKmong = found.description?.match(/\[수동 구매 인증 요청: 크몽 (?:닉네임|ID) - (.*?)\]/);
@@ -684,7 +685,10 @@ export const CustomerSupport = () => {
     const parseTicketInfo = (ticket: any) => {
         const desc = ticket.description || '';
         const match = desc.match(/\[문의 제품:\s*([^\]\s\()]+)/);
-        const product = match ? match[1] : '공통';
+        let product = match ? match[1] : '공통';
+        if (product.toLowerCase() === 'placedb') {
+            product = 'NPLace_DB';
+        }
         
         let typeLabel = '';
         switch (ticket.issue_type) {
@@ -1230,7 +1234,7 @@ export const CustomerSupport = () => {
                                                         value={selectedProduct}
                                                         onChange={e => setSelectedProduct(e.target.value)}
                                                     >
-                                                        <option value="PlaceDB">PlaceDB (플레이스디비)</option>
+                                                        <option value="NPLace_DB">NPLace_DB (플레이스디비)</option>
                                                         <option value="CafeMonster">Cafe Monster (카페몬스터)</option>
                                                         <option value="AppMonster">App Monster (앱몬스터)</option>
                                                         <option value="MarketingMonster">Marketing Monster (마케팅몬스터)</option>

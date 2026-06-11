@@ -8,7 +8,7 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 
 const categories = [
-    { label: "PlaceDB 수집", count: 5, icon: Layers, color: "bg-blue-100 text-blue-600" },
+    { label: "NPLace_DB 수집", count: 5, icon: Layers, color: "bg-blue-100 text-blue-600" },
     { label: "카페 크롤러", count: 10, icon: Smartphone, color: "bg-orange-100 text-orange-600" },
     { label: "스텔스 댓글", count: 3, icon: Activity, color: "bg-pink-100 text-pink-600" },
     { label: "페이퍼 크롤러", count: 12, icon: Monitor, color: "bg-emerald-100 text-emerald-600" },
@@ -75,7 +75,7 @@ export const Dashboard = () => {
 
                 return {
                     name: item.buyer_name || "Unknown",
-                    type: item.product_id || "PlaceDB",
+                    type: item.product_id || "NPLace_DB",
                     status,
                     statusColor
                 };
