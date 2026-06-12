@@ -128,10 +128,22 @@ export const Dashboard = () => {
         if (!productId) return '기타 도구';
         const lower = productId.toLowerCase();
         if (lower === 'placedb' || lower === 'nplace-db' || lower === 'nplace_db') {
-            return 'NPLace_DB';
+            return 'NPlace-DB';
         }
         if (lower === 'cafecrawler' || lower === 'cafe-crawler' || lower === 'cafe_crawler') {
             return '카페 크롤러';
+        }
+        if (lower === 'contentcrawler' || lower === 'content-crawler' || lower === 'content_crawler') {
+            return '사이트 콘텐츠 크롤러';
+        }
+        if (lower === 'usermanager' || lower === 'user-manager' || lower === 'user_manager') {
+            return '회원관리 확장팩';
+        }
+        if (lower === 'commentstats' || lower === 'comment-stats' || lower === 'comment_stats') {
+            return '댓글 수집 통계';
+        }
+        if (lower === 'eventstats' || lower === 'event-stats' || lower === 'event_stats') {
+            return '이벤트 활동 통계';
         }
         return productId;
     };
