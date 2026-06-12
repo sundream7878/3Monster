@@ -98,14 +98,6 @@ export const LicenseGenerator = () => {
     const [activeTab, setActiveTab] = useState<'marketing' | 'cafe'>('marketing');
     const [expandedProductId, setExpandedProductId] = useState<string>('NPlace-DB');
 
-    // Automatically expand the first product of the tab when it changes
-    useEffect(() => {
-        if (activeTab === 'marketing') {
-            setExpandedProductId('NPlace-DB');
-        } else {
-            setExpandedProductId('CafeCrawler');
-        }
-    }, [activeTab]);
 
     const pricingProducts = {
         marketing: [
@@ -147,6 +139,11 @@ export const LicenseGenerator = () => {
             product_id: productId,
             price_sold: price || prev.price_sold
         }));
+
+        // Automatically switch Right Tabs and Expand Accordion
+        const isMarketing = ['NPlace-DB', 'ContentCrawler', 'UserManager'].includes(productId);
+        setActiveTab(isMarketing ? 'marketing' : 'cafe');
+        setExpandedProductId(productId);
     };
 
     const handleLicenseTypeChange = (licenseType: string) => {
@@ -450,7 +447,7 @@ export const LicenseGenerator = () => {
                             <div className="flex gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200 shadow-inner">
                                 <button
                                     type="button"
-                                    onClick={() => setActiveTab('marketing')}
+                                    onClick={() => { setActiveTab('marketing'); setExpandedProductId('NPlace-DB'); }}
                                     className={cn(
                                         "flex-1 py-2.5 text-xs font-black rounded-lg transition-all cursor-pointer border-none outline-none focus:outline-none",
                                         activeTab === 'marketing'
@@ -462,7 +459,7 @@ export const LicenseGenerator = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setActiveTab('cafe')}
+                                    onClick={() => { setActiveTab('cafe'); setExpandedProductId('CafeCrawler'); }}
                                     className={cn(
                                         "flex-1 py-2.5 text-xs font-black rounded-lg transition-all cursor-pointer border-none outline-none focus:outline-none",
                                         activeTab === 'cafe'
