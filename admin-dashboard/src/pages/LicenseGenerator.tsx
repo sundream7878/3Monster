@@ -355,26 +355,52 @@ export const LicenseGenerator = () => {
                     <AnimatePresence>
                         {generatedKey && (
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                                <Card className={`${(generatedKey.startsWith('TEST-') || generatedKey.startsWith('TRIAL-')) ? 'bg-emerald-600' : 'bg-indigo-600'} text-white p-6 space-y-4 shadow-soft rounded-2xl border-none`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center">
-                                            {(generatedKey.startsWith('TEST-') || generatedKey.startsWith('TRIAL-')) ? <Clock className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                                {generatedKey.startsWith('TRIAL-') ? (
+                                    <Card className="bg-emerald-600 text-white p-6 space-y-4 shadow-soft rounded-2xl border-none">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center">
+                                                <CheckCircle2 className="w-4 h-4" />
+                                            </div>
+                                            <h4 className="font-black text-sm">체험판 구매자 등록 완료</h4>
                                         </div>
-                                        <h4 className="font-black text-sm">
-                                            {(generatedKey.startsWith('TEST-') || generatedKey.startsWith('TRIAL-')) ? '체험판/테스트 키 발급 완료' : '정식 라이선스 발급 완료'}
-                                        </h4>
-                                    </div>
-                                    <div className="rounded-xl bg-white/10 p-4 text-center">
-                                        <p className="font-mono text-base font-black tracking-wider">{generatedKey}</p>
-                                    </div>
-                                    <Button
-                                        onClick={() => { navigator.clipboard.writeText(generatedKey); alert('Copy Success!'); }}
-                                        fullWidth
-                                        className="bg-white text-slate-900 hover:bg-slate-50 h-12 font-bold text-xs rounded-xl"
-                                    >
-                                        <Copy className="mr-2 h-4 w-4" /> 키 복사하기
-                                    </Button>
-                                </Card>
+                                        <div className="rounded-xl bg-white/10 p-4 text-xs space-y-2">
+                                            <p>• <b>구매자 (크몽 ID)</b>: {formData.buyer_name}</p>
+                                            <p>• <b>등록 제품</b>: {formData.product_id}</p>
+                                            <p>• <b>이용 유형</b>: DELUXE (5일 체험판)</p>
+                                            <p className="mt-2 text-emerald-100 font-bold border-t border-white/10 pt-2 text-[10px] leading-relaxed">
+                                                ※ 체험판은 프로그램 내에 기본 내장되어 작동하므로, 구매자에게 별도의 라이선스 키를 발급/전달할 필요가 없습니다. (Kmong ID 및 판매 대금 등록 완료)
+                                            </p>
+                                        </div>
+                                        <Button
+                                            onClick={() => setGeneratedKey('')}
+                                            fullWidth
+                                            className="bg-white text-emerald-800 hover:bg-slate-50 h-10 font-bold text-xs rounded-xl"
+                                        >
+                                            확인
+                                        </Button>
+                                    </Card>
+                                ) : (
+                                    <Card className={`${generatedKey.startsWith('TEST-') ? 'bg-emerald-600' : 'bg-indigo-600'} text-white p-6 space-y-4 shadow-soft rounded-2xl border-none`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center">
+                                                {generatedKey.startsWith('TEST-') ? <Clock className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                                            </div>
+                                            <h4 className="font-black text-sm">
+                                                {generatedKey.startsWith('TEST-') ? '테스트 라이선스 키 발급 완료' : '정식 라이선스 발급 완료'}
+                                            </h4>
+                                        </div>
+                                        <div className="rounded-xl bg-white/10 p-4 text-center">
+                                            <p className="font-mono text-base font-black tracking-wider">{generatedKey}</p>
+                                        </div>
+                                        <Button
+                                            onClick={() => { navigator.clipboard.writeText(generatedKey); alert('Copy Success!'); }}
+                                            fullWidth
+                                            className="bg-white text-slate-900 hover:bg-slate-50 h-12 font-bold text-xs rounded-xl"
+                                        >
+                                            <Copy className="mr-2 h-4 w-4" /> 키 복사하기
+                                        </Button>
+                                    </Card>
+                                )}
                             </motion.div>
                         )}
                     </AnimatePresence>
