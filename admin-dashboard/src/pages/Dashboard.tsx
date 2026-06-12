@@ -419,12 +419,12 @@ export const Dashboard = () => {
                         </div>
                         <div className="overflow-x-auto border border-slate-400 rounded-xl shadow-sm">
                             <table className="w-full text-left border-collapse min-w-[500px]">
-                                <thead className="bg-slate-100 border-b-2 border-slate-400">
-                                    <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-left whitespace-nowrap">
-                                        <th className="px-4 py-2.5">제품군</th>
-                                        <th className="px-4 py-2.5">패키지</th>
-                                        <th className="px-4 py-2.5">발행 건수</th>
-                                        <th className="px-4 py-2.5 text-right">총 판매액</th>
+                                <thead className="bg-slate-900 text-white">
+                                    <tr className="text-xs font-black uppercase tracking-wider text-left whitespace-nowrap">
+                                        <th className="px-4 py-3 text-slate-200">제품군</th>
+                                        <th className="px-4 py-3 text-slate-200">패키지</th>
+                                        <th className="px-4 py-3 text-slate-200">발행 건수</th>
+                                        <th className="px-4 py-3 text-right text-slate-200">총 판매액</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-300 text-xs font-semibold whitespace-nowrap">
@@ -491,15 +491,15 @@ export const Dashboard = () => {
 
                         <div className="overflow-x-auto border border-slate-400 rounded-xl shadow-sm">
                             <table className="w-full text-left border-collapse min-w-[750px]">
-                                <thead className="bg-slate-100 border-b-2 border-slate-400">
-                                    <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-left whitespace-nowrap">
-                                        <th className="px-3 py-2.5 w-12 text-center">번호</th>
-                                        <th className="px-3 py-2.5">가입일자</th>
-                                        <th className="px-3 py-2.5">이름</th>
-                                        <th className="px-3 py-2.5">이메일</th>
-                                        <th className="px-3 py-2.5">가입 경로</th>
-                                        <th className="px-3 py-2.5">회원 구분</th>
-                                        <th className="px-3 py-2.5 text-right">라이선스 제어</th>
+                                <thead className="bg-slate-900 text-white">
+                                    <tr className="text-xs font-black uppercase tracking-wider text-left whitespace-nowrap">
+                                        <th className="px-3 py-3 w-12 text-center text-slate-200">번호</th>
+                                        <th className="px-3 py-3 text-slate-200">가입일자</th>
+                                        <th className="px-3 py-3 text-slate-200">이름</th>
+                                        <th className="px-3 py-3 text-slate-200">이메일</th>
+                                        <th className="px-3 py-3 text-slate-200">가입 경로</th>
+                                        <th className="px-3 py-3 text-slate-200">회원 구분</th>
+                                        <th className="px-3 py-3 text-right text-slate-200">라이선스 제어</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-300 text-xs font-semibold whitespace-nowrap">

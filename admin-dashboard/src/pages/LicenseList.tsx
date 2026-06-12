@@ -95,7 +95,6 @@ export const LicenseList = () => {
             <div className="flex justify-between items-end">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-black text-slate-800 tracking-tight">구매자 관리</h1>
-                    <p className="text-slate-400 font-medium">현재 등록된 모든 구매자와 라이선스 활성화 상태를 관리합니다.</p>
                 </div>
                 <div className="flex gap-4">
                     <div className="relative w-80">
@@ -112,13 +111,13 @@ export const LicenseList = () => {
 
             <Card className="overflow-hidden p-0 border border-slate-200 shadow-[0_15px_45px_rgba(0,0,0,0.07)] rounded-2xl bg-white">
                 <table className="w-full">
-                    <thead className="bg-slate-100 border-b border-slate-200">
-                        <tr className="text-[11px] font-black text-slate-700 uppercase tracking-widest text-left">
-                            <th className="px-10 py-5">구매자 성함</th>
-                            <th className="px-10 py-5">제품 / 시리얼</th>
-                            <th className="px-10 py-5">만료일자</th>
-                            <th className="px-10 py-5">상태</th>
-                            <th className="px-10 py-5 text-right">제어</th>
+                    <thead className="bg-slate-900 text-white">
+                        <tr className="text-xs font-black uppercase tracking-wider text-left">
+                            <th className="px-10 py-4.5 text-slate-200">구매자 성함</th>
+                            <th className="px-10 py-4.5 text-slate-200">제품 / 시리얼</th>
+                            <th className="px-10 py-4.5 text-slate-200">만료일자</th>
+                            <th className="px-10 py-4.5 text-slate-200">상태</th>
+                            <th className="px-10 py-4.5 text-right text-slate-200">제어</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300">
