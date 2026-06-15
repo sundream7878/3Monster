@@ -33,7 +33,6 @@ export const LicenseList = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [toasts, setToasts] = useState<Toast[]>([]);
-    const [openMemoId, setOpenMemoId] = useState<string | null>(null);
     let toastCounter = 0;
 
     const showToast = (message: string, type: 'info' | 'success' = 'info') => {
@@ -59,14 +58,7 @@ export const LicenseList = () => {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'licenses' }, fetchLicenses)
             .subscribe();
 
-        // 메모 외부 클릭 시 닫기
-        const closeOnOutside = () => setOpenMemoId(null);
-        window.addEventListener('click', closeOnOutside);
-
-        return () => {
-            supabase.removeChannel(channel);
-            window.removeEventListener('click', closeOnOutside);
-        };
+        return () => { supabase.removeChannel(channel); };
     }, []);
 
     const filteredLicenses = licenses.filter(l =>
@@ -228,31 +220,21 @@ export const LicenseList = () => {
                                         <span className="block truncate">{lic.contact || <span className="text-slate-300">-</span>}</span>
                                     </td>
 
-                                    {/* 메모 - 인라인 팝오버 */}
+                                    {/* 메모 - hover 툴팁 */}
                                     <td className="px-3 py-2 text-center">
                                         {lic.memo ? (
-                                            <div className="relative inline-block">
-                                                <button
-                                                    className="text-indigo-500 hover:text-indigo-700 transition-colors"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        e.nativeEvent.stopImmediatePropagation();
-                                                        setOpenMemoId(openMemoId === lic.id ? null : lic.id);
-                                                    }}
-                                                    title="메모 보기"
-                                                >
-                                                    📝
-                                                </button>
-                                                {openMemoId === lic.id && (
-                                                    <div
-                                                        className="absolute left-0 top-full mt-1 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-64 text-[11px] text-slate-700 font-medium leading-relaxed whitespace-pre-wrap text-left"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        {lic.memo}
-                                                    </div>
-                                                )}
+                                            <div className="group relative inline-block">
+                                                <span className="cursor-default text-base select-none">📝</span>
+                                                <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50
+                                                    hidden group-hover:block
+                                                    bg-slate-900 text-white text-[11px] font-medium leading-relaxed
+                                                    rounded-xl shadow-2xl p-3 w-60 whitespace-pre-wrap text-left
+                                                    before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2
+                                                    before:border-4 before:border-transparent before:border-b-slate-900">
+                                                    {lic.memo}
+                                                </div>
                                             </div>
-                                        ) : <span className="text-slate-200">-</span>}
+                                        ) : <span className="text-slate-200 text-xs">-</span>}
                                     </td>
 
                                     {/* 제품 - NPlace-DB(Deluxe 체험판) 형식 */}
