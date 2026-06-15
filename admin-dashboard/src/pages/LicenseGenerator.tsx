@@ -36,8 +36,8 @@ interface PricingItem {
 
 const defaultLegacyPrices: { [key: string]: number } = {
     'TEST': 0,
-    '1M': 30000,
-    '3M': 90000,
+    '1M': 19000,
+    '3M': 45000,
     '1Y': 270000
 };
 
@@ -61,32 +61,32 @@ export const LicenseGenerator = () => {
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed) && parsed.every(p => ['TRIAL', '6M', 'LIFETIME'].includes(p.pkg))) {
+                if (Array.isArray(parsed) && parsed.every(p => ['TRIAL', '1M', '3M'].includes(p.pkg))) {
                     return parsed;
                 }
             } catch (e) {}
         }
         return [
             // 마케팅 몬스터
-            { id: 1, product: 'NPlace-DB', pkg: 'TRIAL', label: 'DELUXE (5일 체험판)', price: 5000, status: '확정' },
-            { id: 2, product: 'NPlace-DB', pkg: '6M', label: 'STANDARD (6개월 이용권)', price: 99000, status: '확정' },
-            { id: 3, product: 'NPlace-DB', pkg: 'LIFETIME', label: 'PREMIUM (영구 소장본)', price: 198000, status: '확정' },
-            { id: 4, product: 'ContentCrawler', pkg: 'TRIAL', label: 'DELUXE (5일 체험판)', price: 5000, status: '안' },
-            { id: 5, product: 'ContentCrawler', pkg: '6M', label: 'STANDARD (6개월 이용권)', price: 99000, status: '안' },
-            { id: 6, product: 'ContentCrawler', pkg: 'LIFETIME', label: 'PREMIUM (영구 소장본)', price: 198000, status: '안' },
-            { id: 7, product: 'UserManager', pkg: 'TRIAL', label: 'DELUXE (5일 체험판)', price: 5000, status: '안' },
-            { id: 8, product: 'UserManager', pkg: '6M', label: 'STANDARD (6개월 이용권)', price: 99000, status: '안' },
-            { id: 9, product: 'UserManager', pkg: 'LIFETIME', label: 'PREMIUM (영구 소장본)', price: 198000, status: '안' },
+            { id: 1, product: 'NPlace-DB', pkg: 'TRIAL', label: '[5일 체험판] NPlace_DB Pro (500건 제한)', price: 5000, status: '확정' },
+            { id: 2, product: 'NPlace-DB', pkg: '1M', label: '[1개월 이용권] NPlace_DB Pro (무제한 수집)', price: 19000, status: '확정' },
+            { id: 3, product: 'NPlace-DB', pkg: '3M', label: '[3개월 이용권] NPlace_DB Pro (무제한 수집, 1.5만원 할인)', price: 45000, status: '확정' },
+            { id: 4, product: 'ContentCrawler', pkg: 'TRIAL', label: '[5일 체험판] ContentCrawler (500건 제한)', price: 5000, status: '안' },
+            { id: 5, product: 'ContentCrawler', pkg: '1M', label: '[1개월 이용권] ContentCrawler (무제한 수집)', price: 19000, status: '안' },
+            { id: 6, product: 'ContentCrawler', pkg: '3M', label: '[3개월 이용권] ContentCrawler (무제한 수집, 1.5만원 할인)', price: 45000, status: '안' },
+            { id: 7, product: 'UserManager', pkg: 'TRIAL', label: '[5일 체험판] UserManager (500건 제한)', price: 5000, status: '안' },
+            { id: 8, product: 'UserManager', pkg: '1M', label: '[1개월 이용권] UserManager (무제한 수집)', price: 19000, status: '안' },
+            { id: 9, product: 'UserManager', pkg: '3M', label: '[3개월 이용권] UserManager (무제한 수집, 1.5만원 할인)', price: 45000, status: '안' },
             // 카페 몬스터
-            { id: 10, product: 'CafeCrawler', pkg: 'TRIAL', label: 'DELUXE (5일 체험판)', price: 5000, status: '안' },
-            { id: 11, product: 'CafeCrawler', pkg: '6M', label: 'STANDARD (6개월 이용권)', price: 99000, status: '안' },
-            { id: 12, product: 'CafeCrawler', pkg: 'LIFETIME', label: 'PREMIUM (영구 소장본)', price: 198000, status: '안' },
-            { id: 13, product: 'CommentStats', pkg: 'TRIAL', label: 'DELUXE (5일 체험판)', price: 5000, status: '안' },
-            { id: 14, product: 'CommentStats', pkg: '6M', label: 'STANDARD (6개월 이용권)', price: 99000, status: '안' },
-            { id: 15, product: 'CommentStats', pkg: 'LIFETIME', label: 'PREMIUM (영구 소장본)', price: 198000, status: '안' },
-            { id: 16, product: 'EventStats', pkg: 'TRIAL', label: 'DELUXE (5일 체험판)', price: 5000, status: '안' },
-            { id: 17, product: 'EventStats', pkg: '6M', label: 'STANDARD (6개월 이용권)', price: 99000, status: '안' },
-            { id: 18, product: 'EventStats', pkg: 'LIFETIME', label: 'PREMIUM (영구 소장본)', price: 198000, status: '안' },
+            { id: 10, product: 'CafeCrawler', pkg: 'TRIAL', label: '[5일 체험판] CafeCrawler (500건 제한)', price: 5000, status: '안' },
+            { id: 11, product: 'CafeCrawler', pkg: '1M', label: '[1개월 이용권] CafeCrawler (무제한 수집)', price: 19000, status: '안' },
+            { id: 12, product: 'CafeCrawler', pkg: '3M', label: '[3개월 이용권] CafeCrawler (무제한 수집, 1.5만원 할인)', price: 45000, status: '안' },
+            { id: 13, product: 'CommentStats', pkg: 'TRIAL', label: '[5일 체험판] CommentStats (500건 제한)', price: 5000, status: '안' },
+            { id: 14, product: 'CommentStats', pkg: '1M', label: '[1개월 이용권] CommentStats (무제한 수집)', price: 19000, status: '안' },
+            { id: 15, product: 'CommentStats', pkg: '3M', label: '[3개월 이용권] CommentStats (무제한 수집, 1.5만원 할인)', price: 45000, status: '안' },
+            { id: 16, product: 'EventStats', pkg: 'TRIAL', label: '[5일 체험판] EventStats (500건 제한)', price: 5000, status: '안' },
+            { id: 17, product: 'EventStats', pkg: '1M', label: '[1개월 이용권] EventStats (무제한 수집)', price: 19000, status: '안' },
+            { id: 18, product: 'EventStats', pkg: '3M', label: '[3개월 이용권] EventStats (무제한 수집, 1.5만원 할인)', price: 45000, status: '안' },
         ];
     });
 
@@ -252,7 +252,7 @@ export const LicenseGenerator = () => {
             <div className="grid gap-6 lg:grid-cols-12 items-start">
                 {/* Left Form Column */}
                 <Card className="lg:col-span-7 p-0 overflow-hidden border border-slate-200 rounded-2xl bg-white shadow-[0_15px_45px_rgba(0,0,0,0.07)]">
-                    <CardHeader className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white">
+                    <CardHeader className="px-6 py-2 border-b border-slate-200 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white">
                         <CardTitle className="text-xl font-black text-white tracking-tighter">라이선스 정보 입력</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6">
@@ -291,8 +291,8 @@ export const LicenseGenerator = () => {
                                             onChange={(e) => handleLicenseTypeChange(e.target.value)}
                                         >
                                             <option value="TRIAL">DELUXE (5일 체험판)</option>
-                                            <option value="6M">STANDARD (6개월 이용권)</option>
-                                            <option value="LIFETIME">PREMIUM (영구 소장본)</option>
+                                            <option value="1M">STANDARD (1개월 이용권)</option>
+                                            <option value="3M">PREMIUM (3개월 이용권)</option>
                                         </select>
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                             <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />
@@ -437,7 +437,7 @@ export const LicenseGenerator = () => {
 
                     {/* Interactive Pricing Policy Table with Tabs and Accordions */}
                     <Card className="p-0 overflow-hidden bg-white border border-slate-200 shadow-[0_15px_45px_rgba(0,0,0,0.07)] rounded-2xl">
-                        <CardHeader className="px-5 py-4 border-b-2 border-slate-800 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white">
+                        <CardHeader className="px-5 py-2 border-b-2 border-slate-800 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white">
                             <CardTitle className="text-sm font-black text-white flex items-center gap-1.5">
                                 📋 3Monster 제품별 가격표
                             </CardTitle>

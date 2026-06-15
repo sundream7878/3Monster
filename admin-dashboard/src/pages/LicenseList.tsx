@@ -95,10 +95,14 @@ export const LicenseList = () => {
         switch (licenseType) {
             case 'TRIAL':
                 return { label: 'DELUXE (체험판)', color: 'bg-emerald-50 text-emerald-700 border-emerald-200/80' };
+            case '1M':
+                return { label: 'STANDARD (1개월)', color: 'bg-indigo-50 text-indigo-700 border-indigo-200/80' };
+            case '3M':
+                return { label: 'PREMIUM (3개월)', color: 'bg-purple-50 text-purple-700 border-purple-200/80' };
             case '6M':
-                return { label: 'STANDARD', color: 'bg-indigo-50 text-indigo-700 border-indigo-200/80' };
+                return { label: 'STANDARD (6개월)', color: 'bg-indigo-50 text-indigo-700 border-indigo-200/80' };
             case 'LIFETIME':
-                return { label: 'PREMIUM', color: 'bg-purple-50 text-purple-700 border-purple-200/80' };
+                return { label: 'PREMIUM (영구)', color: 'bg-purple-50 text-purple-700 border-purple-200/80' };
             default:
                 return { label: licenseType || '기타', color: 'bg-slate-50 text-slate-700 border-slate-200' };
         }
