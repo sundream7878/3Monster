@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -34,7 +34,6 @@ export const LicenseList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [toasts, setToasts] = useState<Toast[]>([]);
     const [openMemoId, setOpenMemoId] = useState<string | null>(null);
-    const memoRef = useRef<HTMLDivElement>(null);
     let toastCounter = 0;
 
     const showToast = (message: string, type: 'info' | 'success' = 'info') => {
@@ -60,15 +59,13 @@ export const LicenseList = () => {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'licenses' }, fetchLicenses)
             .subscribe();
 
-        const handleClickOutside = (e: MouseEvent) => {
-            if (memoRef.current && !memoRef.current.contains(e.target as Node)) {
-                setOpenMemoId(null);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
+        // 메모 외부 클릭 시 닫기
+        const closeOnOutside = () => setOpenMemoId(null);
+        window.addEventListener('click', closeOnOutside);
+
         return () => {
             supabase.removeChannel(channel);
-            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('click', closeOnOutside);
         };
     }, []);
 
@@ -234,16 +231,19 @@ export const LicenseList = () => {
                                     {/* 메모 - 인라인 팝오버 */}
                                     <td className="px-3 py-2 text-center">
                                         {lic.memo ? (
-                                            <div className="relative inline-block" ref={openMemoId === lic.id ? memoRef : undefined}>
+                                            <div className="relative inline-block">
                                                 <button
                                                     className="text-indigo-500 hover:text-indigo-700 transition-colors"
-                                                    onClick={() => setOpenMemoId(openMemoId === lic.id ? null : lic.id)}
+                                                    onClick={(e) => { e.stopPropagation(); setOpenMemoId(openMemoId === lic.id ? null : lic.id); }}
                                                     title="메모 보기"
                                                 >
                                                     📝
                                                 </button>
                                                 {openMemoId === lic.id && (
-                                                    <div className="absolute left-0 top-full mt-1 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-64 text-[11px] text-slate-700 font-medium leading-relaxed whitespace-pre-wrap text-left">
+                                                    <div
+                                                        className="absolute left-0 top-full mt-1 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-64 text-[11px] text-slate-700 font-medium leading-relaxed whitespace-pre-wrap text-left"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         {lic.memo}
                                                     </div>
                                                 )}
